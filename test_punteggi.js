@@ -68,10 +68,10 @@ const qualiAtteso = 1 + 1 + 3 + 3 + 0 + 3 + 0 + 15 * 3; // = 56
 //   p12..p22: posizione esatta ma oltre P10 -> 0 punti F1, niente bonus = 0
 const garaAtteso = 4 + 22 + 4 + 13 + 11 + 9 + 7 + 5 + 3 + 0 + 0; // = 78
 
-// Bonus: giroVeloce+8, pitStopVeloce+0, gommaLunga+8, primoRitirato+8,
-// maggiorGuadagno+0, safetyCar scarto1 +4 -> totale 28, indovinati=4
-const bonusAtteso = 8 + 0 + 8 + 8 + 0 + 4; // = 28
-const indovinatiAttesi = 4;
+// Bonus: giroVeloce+5, pitStopVeloce+0, gommaLunga+5, primoRitirato+5,
+// maggiorGuadagno+0, safetyCar scarto1 -> 0 (nessun punteggio parziale) -> totale 15, indovinati=3
+const bonusAtteso = 5 + 0 + 5 + 5 + 0 + 0; // = 15
+const indovinatiAttesi = 3;
 
 const totaleAtteso = qualiAtteso + garaAtteso + bonusAtteso; // = 162
 const poleOkAtteso = false;      // pron pole = p01, reale pole = p02
