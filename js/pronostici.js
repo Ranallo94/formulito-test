@@ -7,9 +7,12 @@
  * cascata (scegliere un pilota già assegnato altrove lo libera lì, così non
  * si possono avere duplicati). Sotto la sessione Gara ci sono i 6 campi bonus.
  *
- * Salvataggio separato per sessione. Lock automatico quando la sessione è
- * chiusa (sistema/config.quali_aperti / gara_aperti), stesso pattern
- * onSistemaSnapshot usato da Wimbledino/Medusino.
+ * Salvataggio separato per sessione (due bottoni), ma il LOCK è UNICO per
+ * entrambe (sistema/config.pronostici_aperti): il pronostico di gara non può
+ * essere modificato dopo aver visto le qualifiche, quindi qualifica e gara si
+ * chiudono nello stesso istante, all'inizio delle qualifiche — non esistono
+ * due sessioni indipendenti lato lock, solo lato UI/salvataggio. Stesso
+ * pattern onSistemaSnapshot usato da Wimbledino/Medusino.
  *
  * Documento salvato: pronostici/{uid} = {
  *   qualifica: { griglia: [22 pid] },
@@ -39,8 +42,7 @@ const BONUS_CAMPI = [
 
 let _db = null;
 let _pron = null;
-let _quali_aperti = true;
-let _gara_aperti = true;
+let _pronostici_aperti = true;
 let _unsubSistema = null;
 let _built = false;
 
@@ -68,9 +70,8 @@ export async function initPronostici() {
 
   if (_unsubSistema) _unsubSistema();
   _unsubSistema = onSistemaSnapshot((cfg) => {
-    _quali_aperti = cfg?.quali_aperti !== false;
-    _gara_aperti  = cfg?.gara_aperti  !== false;
-    STATE.pronosticiAperti = _quali_aperti || _gara_aperti;
+    _pronostici_aperti = cfg?.pronostici_aperti !== false;
+    STATE.pronosticiAperti = _pronostici_aperti;
     _applyLockState();
   });
 
@@ -225,8 +226,7 @@ function _renderBonus() {
 
 // ── SALVATAGGIO ───────────────────────────────────────
 async function _salvaSessione(sessione, btn) {
-  const aperta = sessione === 'qualifica' ? _quali_aperti : _gara_aperti;
-  if (!aperta) { showToast('Sessione chiusa: non puoi modificare.', 'warning'); return; }
+  if (!_pronostici_aperti) { showToast('Pronostici chiusi: non puoi modificare.', 'warning'); return; }
   const msg = document.getElementById('msg-' + sessione);
   btn.disabled = true; const old = btn.textContent; btn.textContent = '⏳ Salvataggio…';
   try {
@@ -250,29 +250,26 @@ function _applyLockState() {
   const page = document.getElementById('page-pronostici');
   if (!page) return;
 
-  if (_quali_aperti && _gara_aperti) {
+  if (_pronostici_aperti) {
     if (banner) banner.style.display = 'none';
-    if (status) status.textContent = 'Qualifiche e Gara aperte';
+    if (status) status.textContent = 'Pronostici aperti — Qualifiche e Gara';
   } else {
     if (banner) {
       banner.style.display = '';
       banner.className = 'info-banner info-banner--yellow';
-      const parti = [];
-      if (!_quali_aperti) parti.push('le <strong>Qualifiche</strong>');
-      if (!_gara_aperti) parti.push('la <strong>Gara</strong>');
-      banner.innerHTML = `<span>🔒</span><span>Sono chius${parti.length > 1 ? 'e' : 'a'} ${parti.join(' e ')}: quella scheda è in sola lettura.</span>`;
+      banner.innerHTML = `<span>🔒</span><span>Pronostici chiusi: le qualifiche sono iniziate, la scheda (Qualifiche e Gara) è in sola lettura.</span>`;
     }
-    if (status) status.textContent = `Qualifiche ${_quali_aperti ? 'aperte' : 'chiuse'} · Gara ${_gara_aperti ? 'aperta' : 'chiusa'}`;
+    if (status) status.textContent = 'Pronostici chiusi';
   }
 
   const quali = document.getElementById('pron-QUALI');
   const gara  = document.getElementById('pron-GARA');
-  [[quali, _quali_aperti], [gara, _gara_aperti]].forEach(([box, aperta]) => {
+  [quali, gara].forEach((box) => {
     if (!box) return;
     box.querySelectorAll('.grid-select, .bonus-select, .bonus-num').forEach(el => {
-      if (aperta) el.removeAttribute('disabled'); else el.setAttribute('disabled', 'disabled');
+      if (_pronostici_aperti) el.removeAttribute('disabled'); else el.setAttribute('disabled', 'disabled');
     });
-    box.querySelectorAll('[data-save]').forEach(b => { b.style.display = aperta ? '' : 'none'; });
+    box.querySelectorAll('[data-save]').forEach(b => { b.style.display = _pronostici_aperti ? '' : 'none'; });
   });
 }
 

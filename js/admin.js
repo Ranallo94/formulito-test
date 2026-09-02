@@ -6,7 +6,9 @@
  *    di gara reale e i 6 bonus di gara
  *  - Partecipanti: stato schede, abilita/disabilita, gestione admin
  *  - Montepremi: quote, pagamenti, ripartizione premi (invariato da Medusino)
- *  - Sistema: apri/chiudi le due sessioni (Qualifiche/Gara), ricalcola la classifica
+ *  - Sistema: un unico interruttore apri/chiudi pronostici (Qualifiche e Gara
+ *    si bloccano insieme, all'inizio delle qualifiche — vedi nota in pronostici.js),
+ *    ricalcola la classifica
  *
  * Il ricalcolo classifica è interamente client-side: carica pronostici +
  * risultati, applica punteggi.js, scrive classifica/snapshot.
@@ -27,8 +29,7 @@ import { showToast, openModal, closeModal, formatDate } from './ui.js';
 let _db = null;
 let _ris = null;            // copia di lavoro dei risultati ufficiali
 let _parts = [];            // partecipanti
-let _quali_aperti = true;
-let _gara_aperti = true;
+let _pronostici_aperti = true;
 let _built = false;
 let _montepremiCfg = { quota: 0, percentuali: [60, 30, 10] };
 
@@ -69,8 +70,7 @@ export async function initAdmin() {
   try { await _renderMontepremi(); }       catch (e) { console.error('[admin] montepremi', e); }
 
   onSistemaSnapshot((cfg) => {
-    _quali_aperti = cfg?.quali_aperti !== false;
-    _gara_aperti  = cfg?.gara_aperti  !== false;
+    _pronostici_aperti = cfg?.pronostici_aperti !== false;
     _aggiornaStatoSessioni();
   });
 }
@@ -141,14 +141,10 @@ function _buildShell() {
     <div id="tab-admin-sistema" class="tab-content">
       <div class="admin-sistema-grid">
         <div class="sistema-card">
-          <h4>🏁 Qualifiche</h4>
-          <p id="sistema-quali-status">—</p>
-          <button type="button" id="btn-toggle-quali" class="btn btn-secondary">Apri / Chiudi</button>
-        </div>
-        <div class="sistema-card">
-          <h4>🏆 Gara</h4>
-          <p id="sistema-gara-status">—</p>
-          <button type="button" id="btn-toggle-gara" class="btn btn-secondary">Apri / Chiudi</button>
+          <h4>📋 Pronostici (Qualifiche + Gara)</h4>
+          <p id="sistema-pronostici-status">—</p>
+          <button type="button" id="btn-toggle-pronostici" class="btn btn-secondary">Apri / Chiudi</button>
+          <p class="reg-desc" style="margin-top:6px">Un unico interruttore: si chiudono insieme, all'inizio delle qualifiche (sabato 16:00). Non esiste un secondo blocco per la gara — vedi Regolamento.</p>
         </div>
         <div class="sistema-card">
           <h4>🏅 Classifica</h4>
@@ -163,8 +159,7 @@ function _buildShell() {
     btn.addEventListener('click', () => _salvaRisultatiSessione(btn.dataset.savris, btn));
   });
 
-  page.querySelector('#btn-toggle-quali').addEventListener('click', () => _toggleSessione('quali_aperti', 'quali'));
-  page.querySelector('#btn-toggle-gara').addEventListener('click', () => _toggleSessione('gara_aperti', 'gara'));
+  page.querySelector('#btn-toggle-pronostici').addEventListener('click', () => _toggleSessione());
   page.querySelector('#btn-ricalcola-classifica').addEventListener('click', () => _ricalcola(true));
 
   const tabMp = page.querySelector('[data-tab="tab-admin-montepremi"]');
@@ -435,8 +430,7 @@ async function _salvaRisultatiSessione(sessione, btn) {
 async function _renderSistema() {
   try {
     const cfg = await getSistema();
-    _quali_aperti = cfg?.quali_aperti !== false;
-    _gara_aperti  = cfg?.gara_aperti  !== false;
+    _pronostici_aperti = cfg?.pronostici_aperti !== false;
   } catch (_) {}
   _aggiornaStatoSessioni();
   try {
@@ -447,20 +441,17 @@ async function _renderSistema() {
 }
 
 function _aggiornaStatoSessioni() {
-  const q = document.getElementById('sistema-quali-status');
-  if (q) q.textContent = _quali_aperti ? '🟢 Aperte — i partecipanti possono modificare' : '🔴 Chiuse — scheda bloccata';
-  const g = document.getElementById('sistema-gara-status');
-  if (g) g.textContent = _gara_aperti ? '🟢 Aperta — i partecipanti possono modificare' : '🔴 Chiusa — scheda bloccata';
+  const p = document.getElementById('sistema-pronostici-status');
+  if (p) p.textContent = _pronostici_aperti ? '🟢 Aperti — i partecipanti possono modificare Qualifiche e Gara' : '🔴 Chiusi — schede bloccate';
 }
 
-async function _toggleSessione(campo, tipo) {
-  const attuale = tipo === 'quali' ? _quali_aperti : _gara_aperti;
-  const nuovo = !attuale;
+async function _toggleSessione() {
+  const nuovo = !_pronostici_aperti;
   try {
-    await updateSistema({ [campo]: nuovo });
-    if (tipo === 'quali') _quali_aperti = nuovo; else _gara_aperti = nuovo;
+    await updateSistema({ pronostici_aperti: nuovo });
+    _pronostici_aperti = nuovo;
     _aggiornaStatoSessioni();
-    showToast(nuovo ? 'Sessione aperta.' : 'Sessione chiusa.', 'success');
+    showToast(nuovo ? 'Pronostici aperti.' : 'Pronostici chiusi.', 'success');
   } catch (err) { showToast('Errore: ' + err.message, 'error'); }
 }
 
