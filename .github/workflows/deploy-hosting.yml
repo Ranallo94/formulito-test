@@ -30,6 +30,6 @@ jobs:
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/sa.json
 
       - name: Deploy Hosting
-        run: firebase deploy --only hosting --project medusino-2026 --non-interactive
+        run: firebase deploy --only hosting --project formulito-test --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json

@@ -7,7 +7,7 @@ on:
     branches: [ main ]
     paths:
       - 'functions/**'
-      - 'usopen_db.json'
+      - 'f1_db.json'
   workflow_dispatch:
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
       # Le Functions leggono la loro copia del tabellone: la riallineiamo sempre
       # a quella di radice, così i due file non possono divergere.
       - name: Sync event DB into functions
-        run: cp usopen_db.json functions/usopen_db.json
+        run: cp f1_db.json functions/f1_db.json
 
       - name: Install Functions dependencies
         run: npm install
@@ -39,6 +39,6 @@ jobs:
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/sa.json
 
       - name: Deploy Functions
-        run: firebase deploy --only functions --project medusino-2026 --force
+        run: firebase deploy --only functions --project formulito-test --force
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
