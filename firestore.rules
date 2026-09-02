@@ -43,21 +43,22 @@ service cloud.firestore {
 
     // ── PRONOSTICI ────────────────────────────────────
     // Tutti gli approvati possono leggere (per vedere le schede altrui dalla classifica).
-    // Il proprietario può scrivere la propria scheda SOLO se ALMENO UNA delle due
-    // sessioni (Qualifiche/Gara) è ancora aperta — il documento contiene entrambe,
-    // e la UI blocca lato client la sessione già chiusa. Gli admin possono sempre
-    // scrivere (correzioni manuali durante il weekend).
-    // Allineata al frontend (cfg?.quali_aperti / gara_aperti !== false): se il
-    // documento di config o i campi mancano, le sessioni sono APERTE di default.
-    function qualcheSessioneAperta() {
+    // Il proprietario può scrivere la propria scheda SOLO mentre i pronostici sono
+    // aperti. LOCK UNICO per Qualifiche e Gara (non due sessioni indipendenti): il
+    // pronostico di gara non si può modificare dopo le qualifiche, quindi entrambe
+    // si chiudono nello stesso istante, all'inizio delle qualifiche. Gli admin
+    // possono sempre scrivere (correzioni manuali durante il weekend).
+    // Allineata al frontend (cfg?.pronostici_aperti !== false): se il documento di
+    // config o il campo mancano, i pronostici sono APERTI di default.
+    function pronosticiAperti() {
       let cfg = exists(/databases/$(database)/documents/sistema/config)
         ? get(/databases/$(database)/documents/sistema/config).data : {};
       return (!exists(/databases/$(database)/documents/sistema/config)) ||
-        (cfg.get('quali_aperti', true) == true) || (cfg.get('gara_aperti', true) == true);
+        (cfg.get('pronostici_aperti', true) == true);
     }
     match /pronostici/{uid} {
       allow read:  if isApprovato();
-      allow write: if (isApprovato() && request.auth.uid == uid && qualcheSessioneAperta()) || isAdmin();
+      allow write: if (isApprovato() && request.auth.uid == uid && pronosticiAperti()) || isAdmin();
     }
 
     // ── RISULTATI ─────────────────────────────────────
