@@ -35,12 +35,12 @@ const GARA_BONUS_PODIO = 3;
 const GARA_BONUS_PUNTI = 1;
 
 const BONUS_PUNTI = {
-  giroVeloce: 8,
-  pitStopVeloce: 8,
-  gommaLunga: 8,
-  primoRitirato: 8,
-  maggiorGuadagno: 8,
-  safetyCar: { esatto: 8, vicino: 4 },
+  giroVeloce: 5,
+  pitStopVeloce: 5,
+  gommaLunga: 5,
+  primoRitirato: 5,
+  maggiorGuadagno: 5,
+  safetyCar: { esatto: 5 },
 };
 
 function puntiQualiPosizione(posPrevista, posReale) {
@@ -98,9 +98,7 @@ function calcolaBonus(bonusPron, bonusReale) {
   const scNum = bonusPron && bonusPron.safetyCar;
   const scReale = bonusReale && bonusReale.safetyCar;
   if (scNum != null && scReale != null && scNum !== '' && scReale !== '') {
-    const scarto = Math.abs(Number(scNum) - Number(scReale));
-    if (scarto === 0) { punti += BONUS_PUNTI.safetyCar.esatto; indovinati++; }
-    else if (scarto === 1) { punti += BONUS_PUNTI.safetyCar.vicino; indovinati++; }
+    if (Number(scNum) === Number(scReale)) { punti += BONUS_PUNTI.safetyCar.esatto; indovinati++; }
   }
 
   return { punti, indovinati };
