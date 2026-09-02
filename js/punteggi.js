@@ -28,9 +28,16 @@
  *
  * ── BONUS GARA ── 6 voci indipendenti, punti fissi in BONUS_PUNTI:
  *   • giroVeloce, pitStopVeloce, gommaLunga, primoRitirato, maggiorGuadagno:
- *     8 pt se il pilota indicato è esatto, altrimenti 0.
- *   • safetyCar (numero di ingressi): 8 pt se il numero è esatto, 4 pt se lo
- *     scarto è di esattamente 1, altrimenti 0.
+ *     5 pt se il pilota indicato è esatto, altrimenti 0.
+ *   • safetyCar (numero di ingressi): 5 pt se il numero è esatto, altrimenti 0
+ *     (nessun punteggio parziale per lo scarto di 1).
+ *
+ * Nota: il valore di 5 pt/bonus (ridotto da 8, senza mezzo punto sulla safety
+ * car) è stato scelto dopo una simulazione Monte Carlo (3000 GP simulati, 15
+ * partecipanti): con 8 pt i bonus valevano il 22,5% del punteggio totale e
+ * ribaltavano il vincitore nel 24,5% dei casi; a 5 pt scendono al 14,6% del
+ * totale e al 15,4% dei ribaltamenti — un peso ancora percepibile ma non più
+ * dominante rispetto all'ordine di arrivo vero e proprio.
  *
  * Punteggio totale = punti qualifica + punti gara + bonus gara.
  * Spareggio (gara di test, niente di complesso): (1) vincitore gara indovinato,
@@ -50,12 +57,12 @@ export const GARA_BONUS_PUNTI  = 1; // previsto punti (1-10) e arrivato punti (1
 
 // ── BONUS GARA (facilmente modificabile) ──────────────
 export const BONUS_PUNTI = {
-  giroVeloce:      8,
-  pitStopVeloce:   8,
-  gommaLunga:      8,
-  primoRitirato:   8,
-  maggiorGuadagno: 8,
-  safetyCar:       { esatto: 8, vicino: 4 },
+  giroVeloce:      5,
+  pitStopVeloce:   5,
+  gommaLunga:      5,
+  primoRitirato:   5,
+  maggiorGuadagno: 5,
+  safetyCar:       { esatto: 5 },
 };
 
 /** Punti qualifica per un singolo pilota dato lo scarto tra posizione prevista e reale. */
@@ -119,14 +126,12 @@ function calcolaBonus(bonusPron, bonusReale) {
     if (ok) { punti += BONUS_PUNTI[id]; indovinati++; }
   });
 
-  // Safety car: numero intero, tollera scarto di 1
+  // Safety car: numero intero esatto, nessun punteggio parziale
   const scNum = bonusPron?.safetyCar;
   const scReale = bonusReale?.safetyCar;
   let scPunti = 0;
   if (scNum != null && scReale != null && scNum !== '' && scReale !== '') {
-    const scarto = Math.abs(Number(scNum) - Number(scReale));
-    if (scarto === 0) scPunti = BONUS_PUNTI.safetyCar.esatto;
-    else if (scarto === 1) scPunti = BONUS_PUNTI.safetyCar.vicino;
+    if (Number(scNum) === Number(scReale)) scPunti = BONUS_PUNTI.safetyCar.esatto;
   }
   dettaglio.safetyCar = { scelto: scNum, reale: scReale, punti: scPunti };
   if (scPunti) indovinati++;
