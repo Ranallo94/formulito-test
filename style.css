@@ -2925,20 +2925,20 @@ select.field-input option { background: var(--bg-card2); }
 /* ═══════════════════════════════════════════════════════════
    FORMULITO — griglie di ordinamento piloti (Qualifiche/Gara)
 ═══════════════════════════════════════════════════════════ */
-.grid-form { display: grid; gap: 8px; }
+.grid-form { display: grid; gap: 6px; max-width: 460px; margin: 0 auto; }
 .grid-row {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 8px 12px;
+  border-radius: var(--radius-sm); padding: 6px 10px;
 }
 .grid-row-pos {
-  flex: 0 0 64px; font-size: 12px; font-weight: 800; text-transform: uppercase;
+  flex: 0 0 52px; font-size: 11px; font-weight: 800; text-transform: uppercase;
   color: var(--text-muted); text-align: center;
 }
 .grid-select {
-  flex: 1 1 auto; min-width: 0; background: var(--bg-card2); color: var(--text);
+  flex: 1 1 auto; min-width: 0; max-width: 220px; background: var(--bg-card2); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 8px 10px; font-size: 14px;
+  padding: 6px 8px; font-size: 13px;
 }
 .grid-select:disabled { opacity: .6; }
 .grid-row--ro { background: transparent; border-style: dashed; }
@@ -2954,7 +2954,7 @@ select.field-input option { background: var(--bg-card2); }
 }
 
 /* Ordinamento read-only (profilo / risultati) */
-.grid-ordine { list-style: none; display: grid; gap: 6px; max-height: 480px; overflow-y: auto; }
+.grid-ordine { list-style: none; display: grid; gap: 6px; max-height: 480px; overflow-y: auto; max-width: 460px; margin: 0 auto; }
 .grid-riga {
   display: flex; align-items: center; gap: 10px;
   background: var(--bg-card); border: 1px solid var(--border);
