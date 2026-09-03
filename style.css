@@ -2406,10 +2406,10 @@ select.field-input option { background: var(--bg-card2); }
 
 /* Bottone info (apre la scheda) */
 .player-info-btn {
-  flex: 0 0 auto; width: 34px; align-self: stretch;
+  flex: 0 0 auto; width: 24px; align-self: stretch;
   background: var(--bg-card2); border: 1.5px solid var(--border);
   color: var(--text-muted); border-radius: var(--radius-sm);
-  font-size: 15px; font-weight: 700; line-height: 1;
+  font-size: 13px; font-weight: 700; line-height: 1;
   transition: border-color var(--transition), color var(--transition);
 }
 .player-info-btn:hover { border-color: var(--oro); color: var(--oro); }
@@ -2467,28 +2467,23 @@ select.field-input option { background: var(--bg-card2); }
 .pc-dl dt { color: var(--text-muted); font-size: 13px; }
 .pc-dl dd { color: var(--text); font-size: 13px; font-weight: 600; text-align: right; display: flex; align-items: center; gap: 6px; }
 
-/* Forma recente */
-.pc-formhead { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.pc-record { font-size: 16px; font-weight: 900; color: var(--text); }
-.pc-dots { display: inline-flex; gap: 4px; }
-.pc-dotres {
-  width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
-  align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff;
-}
-.pc-dotres.win { background: var(--verde-light); }
-.pc-dotres.loss { background: var(--rosso); }
-.pc-matchlist { display: flex; flex-direction: column; gap: 8px; }
-.pc-match {
+/* Forma recente (ultime 5 gare, dati Jolpica F1 API) */
+.forma-strip { display: flex; gap: 6px; flex-wrap: wrap; }
+.forma-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 56px; padding: 6px 8px; border-radius: var(--radius-sm);
   background: var(--bg-card2); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 9px 12px;
 }
-.pc-match-l { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
-.pc-res { font-weight: 800; }
-.pc-res.win { color: var(--verde-light); }
-.pc-res.loss { color: var(--rosso); }
-.pc-score { font-weight: 800; color: var(--text); }
-.pc-vs { color: var(--text); display: inline-flex; align-items: center; gap: 5px; }
-.pc-match-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.forma-chip-pos { font-size: 13px; font-weight: 900; }
+.forma-chip-gp { font-size: 10px; color: var(--text-muted); text-align: center; white-space: nowrap; }
+.forma-chip--vittoria { border-color: var(--oro); background: color-mix(in srgb, var(--oro) 18%, var(--bg-card2)); }
+.forma-chip--vittoria .forma-chip-pos { color: var(--oro); }
+.forma-chip--podio { border-color: var(--blu); }
+.forma-chip--podio .forma-chip-pos { color: var(--blu); }
+.forma-chip--punti .forma-chip-pos { color: var(--text); }
+.forma-chip--fuori .forma-chip-pos { color: var(--text-muted); }
+.forma-chip--dnf { border-color: var(--rosso); }
+.forma-chip--dnf .forma-chip-pos { color: var(--rosso); }
 
 /* ════════════════════════════════════════
    MONTEPREMI / PAGAMENTI (admin)
@@ -2925,20 +2920,25 @@ select.field-input option { background: var(--bg-card2); }
 /* ═══════════════════════════════════════════════════════════
    FORMULITO — griglie di ordinamento piloti (Qualifiche/Gara)
 ═══════════════════════════════════════════════════════════ */
-.grid-form { display: grid; gap: 6px; max-width: 460px; margin: 0 auto; }
+.grid-form { display: grid; gap: 5px; max-width: 420px; margin: 0 auto; }
 .grid-row {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 6px;
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 6px 10px;
+  border-radius: var(--radius-sm); padding: 4px 8px;
 }
+.grid-row--top {
+  border-color: var(--oro);
+  background: color-mix(in srgb, var(--oro) 10%, var(--bg-card));
+}
+.grid-row--top .grid-row-pos { color: var(--oro); }
 .grid-row-pos {
-  flex: 0 0 52px; font-size: 11px; font-weight: 800; text-transform: uppercase;
-  color: var(--text-muted); text-align: center;
+  flex: 0 0 26px; font-size: 11px; font-weight: 800;
+  color: var(--text-muted); text-align: center; white-space: nowrap;
 }
 .grid-select {
-  flex: 1 1 auto; min-width: 0; max-width: 220px; background: var(--bg-card2); color: var(--text);
+  flex: 1 1 auto; min-width: 0; max-width: 170px; background: var(--bg-card2); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 6px 8px; font-size: 13px;
+  padding: 5px 6px; font-size: 12px;
 }
 .grid-select:disabled { opacity: .6; }
 .grid-row--ro { background: transparent; border-style: dashed; }
@@ -2946,8 +2946,9 @@ select.field-input option { background: var(--bg-card2); }
 .grid-nome-ro--vuota { color: var(--text-muted); font-style: italic; font-weight: 400; }
 
 .team-badge {
-  flex: 0 0 auto; font-size: 11px; font-weight: 800; line-height: 1;
-  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  flex: 0 0 74px; font-size: 9px; font-weight: 800; line-height: 1;
+  padding: 3px 4px; border-radius: 999px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; text-align: center;
   background: color-mix(in srgb, var(--team-color, var(--oro)) 22%, transparent);
   color: var(--team-color, var(--oro));
   border: 1px solid color-mix(in srgb, var(--team-color, var(--oro)) 55%, transparent);
