@@ -141,11 +141,16 @@ function _renderSessione(sessione) {
   const campo = sessione === 'qualifica' ? _pron.qualifica.griglia : _pron.gara.arrivo;
   const ids = elencoPiloti(_db);
 
+  // Nel menu aperto mostriamo "Nome — Scuderia" (data-full); una volta scelto,
+  // il badge scuderia accanto al select rende ridondante ripeterla nella
+  // casella chiusa, quindi lì mostriamo solo il nome (data-short) — vedi
+  // _accorciaSelectChiuso più sotto.
   const optsHtml = (selPid, posizione) => {
     let out = '<option value="">— scegli —</option>';
     ids.forEach(pid => {
       const usatoAltrove = campo.includes(pid) && campo[posizione] !== pid;
-      out += `<option value="${pid}"${selPid === pid ? ' selected' : ''}${usatoAltrove ? ' disabled' : ''}>${nomePilota(_db, pid)} — ${_db.piloti[pid].team}</option>`;
+      const nome = nomePilota(_db, pid);
+      out += `<option value="${pid}"${selPid === pid ? ' selected' : ''}${usatoAltrove ? ' disabled' : ''} data-full="${nome} — ${_db.piloti[pid].team}" data-short="${nome}">${nome} — ${_db.piloti[pid].team}</option>`;
     });
     return out;
   };
@@ -166,6 +171,10 @@ function _renderSessione(sessione) {
   box.innerHTML = html;
 
   box.querySelectorAll('.grid-select').forEach(sel => {
+    _accorciaSelectChiuso(sel);
+    sel.addEventListener('mousedown', () => _espandiOpzioni(sel));
+    sel.addEventListener('focus', () => _espandiOpzioni(sel));
+    sel.addEventListener('blur', () => _accorciaSelectChiuso(sel));
     sel.addEventListener('change', () => {
       const s = sel.dataset.sessione, pos = +sel.dataset.pos;
       _setPosizione(s, pos, sel.value || null);
@@ -180,6 +189,19 @@ function _renderSessione(sessione) {
   if (prog) prog.textContent = `${ordineCompilate(campo)}/${campo.length}`;
 
   _applyLockState();
+}
+
+// Mostra "Nome — Scuderia" in tutte le opzioni (usato appena il menu sta per
+// aprirsi, così l'elenco a tendina resta completo).
+function _espandiOpzioni(sel) {
+  Array.from(sel.options).forEach(o => { if (o.dataset.full) o.textContent = o.dataset.full; });
+}
+
+// Una volta chiuso il select, l'opzione selezionata mostra solo il nome
+// (la scuderia è già nel badge accanto), evitando la ripetizione.
+function _accorciaSelectChiuso(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.short) opt.textContent = opt.dataset.short;
 }
 
 function _setPosizione(sessione, pos, pid) {
