@@ -22,6 +22,7 @@ import {
   getSistema, updateSistema, onSistemaSnapshot, getClassificaUpdatedAt,
 } from './db.js';
 import { caricaEvento, nomePilota, elencoPiloti } from './evento.js';
+import { teamBadge } from './pilota.js';
 import { normalizzaOrdine, setInPosizione, ordineCompilate } from './griglia.js';
 import { calcolaPunteggio } from './punteggi.js';
 import { showToast, openModal, closeModal, formatDate } from './ui.js';
@@ -332,6 +333,16 @@ async function _toggleOff(uid) {
   } catch (err) { showToast('Errore: ' + err.message, 'error'); }
 }
 
+// Stessa logica "menu aperto = nome+scuderia, chiuso = solo nome" di pronostici.js:
+// il badge scuderia accanto al select renderebbe la scuderia ripetuta due volte.
+function _espandiOpzioni(sel) {
+  Array.from(sel.options).forEach(o => { if (o.dataset.full) o.textContent = o.dataset.full; });
+}
+function _accorciaSelectChiuso(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.short) opt.textContent = opt.dataset.short;
+}
+
 // ── RISULTATI (griglia/arrivo reali) ──────────────────
 function _renderSessioneRisultati(sessione) {
   const box = document.getElementById('adm-risround-' + sessione);
@@ -343,7 +354,8 @@ function _renderSessioneRisultati(sessione) {
     let out = '<option value="">— non assegnato —</option>';
     ids.forEach(pid => {
       const usatoAltrove = campo.includes(pid) && campo[posizione] !== pid;
-      out += `<option value="${pid}"${selPid === pid ? ' selected' : ''}${usatoAltrove ? ' disabled' : ''}>${nomePilota(_db, pid)} — ${_db.piloti[pid].team}</option>`;
+      const nome = nomePilota(_db, pid);
+      out += `<option value="${pid}"${selPid === pid ? ' selected' : ''}${usatoAltrove ? ' disabled' : ''} data-full="${nome} — ${_db.piloti[pid].team}" data-short="${nome}">${nome} — ${_db.piloti[pid].team}</option>`;
     });
     return out;
   };
@@ -351,17 +363,19 @@ function _renderSessioneRisultati(sessione) {
   let html = '';
   for (let i = 0; i < campo.length; i++) {
     const pid = campo[i];
-    const etichettaPos = sessione === 'qualifica'
-      ? (i === 0 ? 'Pole' : `P${i + 1}`)
-      : (i === 0 ? 'Vincitore' : `P${i + 1}`);
-    html += `<div class="grid-row" data-pos="${i}">
-      <span class="grid-row-pos">${etichettaPos}</span>
+    html += `<div class="grid-row${i === 0 ? ' grid-row--top' : ''}" data-pos="${i}">
+      <span class="grid-row-pos" title="${sessione === 'qualifica' ? (i === 0 ? 'Pole position' : '') : (i === 0 ? 'Vincitore' : '')}">P${i + 1}</span>
       <select class="grid-select" data-sessione="${sessione}" data-pos="${i}">${optsHtml(pid, i)}</select>
+      ${pid ? teamBadge(_db, pid) : ''}
     </div>`;
   }
   box.innerHTML = html;
 
   box.querySelectorAll('.grid-select').forEach(sel => {
+    _accorciaSelectChiuso(sel);
+    sel.addEventListener('mousedown', () => _espandiOpzioni(sel));
+    sel.addEventListener('focus', () => _espandiOpzioni(sel));
+    sel.addEventListener('blur', () => _accorciaSelectChiuso(sel));
     sel.addEventListener('change', () => {
       const s = sel.dataset.sessione, pos = +sel.dataset.pos;
       const c = s === 'qualifica' ? _ris.qualifica.griglia : _ris.gara.arrivo;

@@ -158,11 +158,13 @@ function _renderSessione(sessione) {
   let html = '';
   for (let i = 0; i < campo.length; i++) {
     const pid = campo[i];
-    const etichettaPos = sessione === 'qualifica'
-      ? (i === 0 ? 'Pole' : `P${i + 1}`)
-      : (i === 0 ? 'Vincitore' : `P${i + 1}`);
-    html += `<div class="grid-row" data-pos="${i}">
-      <span class="grid-row-pos">${etichettaPos}</span>
+    // Etichetta sempre "P1..P22" (compatta e allineata); la riga 0 (pole/vincitore)
+    // si distingue con uno stile a parte (.grid-row--top) invece di una parola lunga.
+    const titoloPos = sessione === 'qualifica'
+      ? (i === 0 ? 'Pole position' : `Posizione ${i + 1}`)
+      : (i === 0 ? 'Vincitore' : `Posizione ${i + 1}`);
+    html += `<div class="grid-row${i === 0 ? ' grid-row--top' : ''}" data-pos="${i}">
+      <span class="grid-row-pos" title="${titoloPos}">P${i + 1}</span>
       <select class="grid-select" data-sessione="${sessione}" data-pos="${i}">${optsHtml(pid, i)}</select>
       ${pid ? teamBadge(_db, pid) : ''}
       ${pid ? infoBtn(pid) : ''}
