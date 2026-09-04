@@ -12,7 +12,7 @@
     "p03": { "nome": "Lewis",     "cognome": "Hamilton",   "team": "Ferrari",       "colore": "#E80020", "jolpicaId": "hamilton" },
     "p04": { "nome": "Charles",   "cognome": "Leclerc",    "team": "Ferrari",       "colore": "#E80020", "jolpicaId": "leclerc" },
     "p05": { "nome": "Max",       "cognome": "Verstappen", "team": "Red Bull",      "colore": "#3671C6", "jolpicaId": "max_verstappen" },
-    "p06": { "nome": "Isack",     "cognome": "Hadjar",     "team": "Red Bull",      "colore": "#3671C6", "jolpicaId": "hadjar" },
+    "p06": { "nome": "Liam",      "cognome": "Lawson",     "team": "Red Bull",      "colore": "#3671C6", "jolpicaId": "lawson" },
     "p07": { "nome": "George",    "cognome": "Russell",    "team": "Mercedes",      "colore": "#00D7B6", "jolpicaId": "russell" },
     "p08": { "nome": "Kimi",      "cognome": "Antonelli",  "team": "Mercedes",      "colore": "#00D7B6", "jolpicaId": "antonelli" },
     "p09": { "nome": "Fernando",  "cognome": "Alonso",     "team": "Aston Martin",  "colore": "#229971", "jolpicaId": "alonso" },
@@ -25,7 +25,7 @@
     "p16": { "nome": "Franco",    "cognome": "Colapinto",  "team": "Alpine",        "colore": "#FF87BC", "jolpicaId": "colapinto" },
     "p17": { "nome": "Esteban",   "cognome": "Ocon",       "team": "Haas",          "colore": "#B6BABD", "jolpicaId": "ocon" },
     "p18": { "nome": "Oliver",    "cognome": "Bearman",    "team": "Haas",          "colore": "#B6BABD", "jolpicaId": "bearman" },
-    "p19": { "nome": "Liam",      "cognome": "Lawson",     "team": "Racing Bulls",  "colore": "#6C98FF", "jolpicaId": "lawson" },
+    "p19": { "nome": "Yuki",      "cognome": "Tsunoda",    "team": "Racing Bulls",  "colore": "#6C98FF", "jolpicaId": "tsunoda" },
     "p20": { "nome": "Arvid",     "cognome": "Lindblad",   "team": "Racing Bulls",  "colore": "#6C98FF", "jolpicaId": "arvid_lindblad" },
     "p21": { "nome": "Sergio",    "cognome": "Pérez",      "team": "Cadillac",      "colore": "#D4AF37", "jolpicaId": "perez" },
     "p22": { "nome": "Valtteri",  "cognome": "Bottas",     "team": "Cadillac",      "colore": "#D4AF37", "jolpicaId": "bottas" }
