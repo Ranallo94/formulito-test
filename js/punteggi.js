@@ -122,7 +122,7 @@ function calcolaBonus(bonusPron, bonusReale) {
     const scelto = bonusPron?.[id];
     const reale = bonusReale?.[id];
     const ok = !!(scelto && reale && scelto === reale);
-    dettaglio[id] = { scelto, reale, punti: ok ? BONUS_PUNTI[id] : 0 };
+    dettaglio[id] = { scelto: scelto ?? null, reale: reale ?? null, punti: ok ? BONUS_PUNTI[id] : 0 };
     if (ok) { punti += BONUS_PUNTI[id]; indovinati++; }
   });
 
@@ -133,7 +133,7 @@ function calcolaBonus(bonusPron, bonusReale) {
   if (scNum != null && scReale != null && scNum !== '' && scReale !== '') {
     if (Number(scNum) === Number(scReale)) scPunti = BONUS_PUNTI.safetyCar.esatto;
   }
-  dettaglio.safetyCar = { scelto: scNum, reale: scReale, punti: scPunti };
+  dettaglio.safetyCar = { scelto: scNum ?? null, reale: scReale ?? null, punti: scPunti };
   if (scPunti) indovinati++;
   punti += scPunti;
 
