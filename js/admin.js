@@ -103,10 +103,14 @@ function _buildShell() {
     <div id="tab-admin-risultati" class="tab-content">
       <div class="info-banner info-banner--yellow">
         <span>📝</span>
-        <span>Inserisci i risultati REALI del weekend: griglia di partenza (qualifiche) e ordine di arrivo (gara), più i 6 bonus. Dopo il salvataggio la classifica viene ricalcolata.</span>
+        <span>Inserisci i risultati REALI del weekend: ordine di arrivo (gara), più i 6 bonus. Dopo il salvataggio la classifica viene ricalcolata.</span>
+      </div>
+      <div class="info-banner info-banner--yellow" style="margin-top:8px">
+        <span>⚠️</span>
+        <span>Nel campo Qualifiche inserisci l'<strong>ordine effettivo del sabato</strong> (chi ha fatto il tempo migliore in Q1/Q2/Q3), NON la griglia di partenza dopo eventuali penalità per cambio motore/cambio pezzi. I punti si assegnano sull'ordine reale in pista.</span>
       </div>
 
-      <div class="round-head"><h4 class="section-title">🏁 Qualifiche — griglia di partenza reale</h4>
+      <div class="round-head"><h4 class="section-title">🏁 Qualifiche — ordine effettivo (non la griglia post-penalità)</h4>
         <span class="round-progress" id="adm-risprog-qualifica"></span></div>
       <div id="adm-risround-qualifica" class="grid-form"></div>
       <div class="elim-save-row">

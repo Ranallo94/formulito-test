@@ -106,6 +106,10 @@ function _buildShell() {
       <div class="round-head"><h3 class="section-title">🏁 Qualifiche · griglia di partenza prevista</h3>
         <span class="round-progress" id="prog-qualifica"></span></div>
       <p class="text-muted">Indica, posizione per posizione, chi pensi partirà in pole (1ª) e via via tutti gli altri piloti.</p>
+      <div class="info-banner info-banner--yellow" style="margin-bottom:12px">
+        <span>📌</span>
+        <span><strong>NB:</strong> i piloti che sconteranno penalità per cambi al motore partecipano regolarmente alle qualifiche. L'assegnazione dei punti in qualifica avverrà in base all'<strong>ordine effettivo del sabato</strong> (Q1/Q2/Q3), non alla griglia di partenza dopo le penalità. Esempio: se pronostichi Antonelli in pole e lui fa davvero il tempo più veloce in Q3, prendi comunque i punti della pole — anche se poi in griglia partirà più indietro per una penalità.</span>
+      </div>
       <div id="round-qualifica" class="grid-form"></div>
       <div class="elim-save-row">
         <button type="button" class="btn-salva-fase" data-save="qualifica">💾 Salva Qualifiche</button>
