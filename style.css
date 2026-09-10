@@ -177,6 +177,23 @@ select.field-input option { background: var(--bg-card2); }
 .header-user { display: flex; align-items: center; gap: 10px; }
 .header-username { font-size: 14px; font-weight: 600; color: var(--text-muted); }
 
+.header-comp-switch { display: flex; align-items: center; }
+.header-comp-select {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  max-width: 130px;
+  cursor: pointer;
+}
+.header-comp-select:focus { outline: none; border-color: var(--oro); }
+@media (max-width: 480px) {
+  .header-comp-select { max-width: 96px; font-size: 12px; padding: 5px 6px; }
+}
+
 /* NAV — bottom on mobile, sidebar on desktop */
 .app-nav {
   position: fixed;

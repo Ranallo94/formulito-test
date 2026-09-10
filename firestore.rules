@@ -41,50 +41,71 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── PRONOSTICI ────────────────────────────────────
-    // Tutti gli approvati possono leggere (per vedere le schede altrui dalla classifica).
-    // Il proprietario può scrivere la propria scheda SOLO mentre i pronostici sono
-    // aperti. LOCK UNICO per Qualifiche e Gara (non due sessioni indipendenti): il
-    // pronostico di gara non si può modificare dopo le qualifiche, quindi entrambe
-    // si chiudono nello stesso istante, all'inizio delle qualifiche. Gli admin
-    // possono sempre scrivere (correzioni manuali durante il weekend).
-    // Allineata al frontend (cfg?.pronostici_aperti !== false): se il documento di
-    // config o il campo mancano, i pronostici sono APERTI di default.
-    function pronosticiAperti() {
-      let cfg = exists(/databases/$(database)/documents/sistema/config)
-        ? get(/databases/$(database)/documents/sistema/config).data : {};
-      return (!exists(/databases/$(database)/documents/sistema/config)) ||
-        (cfg.get('pronostici_aperti', true) == true);
-    }
-    match /pronostici/{uid} {
-      allow read:  if isApprovato();
-      allow write: if (isApprovato() && request.auth.uid == uid && pronosticiAperti()) || isAdmin();
+    // ── COMPETIZIONI ───────────────────────────────────
+    // Più competizioni (es. "monza", "madrid") nella stessa app, stesso login:
+    // chi è approvato in partecipanti/{uid} lo è per TUTTE le competizioni
+    // (nessuna approvazione separata per competizione). I dati di ciascuna
+    // gara (pronostici, risultati, classifica, sistema) sono isolati sotto
+    // competizioni/{compId}/... — le classifiche NON si sommano tra gare.
+    //
+    // Allineata al frontend (cfg?.pronostici_aperti !== false): se il
+    // documento di config o il campo mancano, i pronostici sono APERTI di default.
+    function pronosticiAperti(compId) {
+      let cfgPath = /databases/$(database)/documents/competizioni/$(compId)/sistema/config;
+      return (!exists(cfgPath)) || (get(cfgPath).data.get('pronostici_aperti', true) == true);
     }
 
-    // ── RISULTATI ─────────────────────────────────────
-    match /risultati/{doc} {
-      allow read: if isApprovato();
-      allow write: if isAdmin(); // Admin può scrivere (sync API + simulazioni manuali)
+    match /competizioni/{compId} {
+
+      // ── PRONOSTICI ──────────────────────────────────
+      // Tutti gli approvati possono leggere (per vedere le schede altrui dalla
+      // classifica). Il proprietario può scrivere la propria scheda SOLO mentre
+      // i pronostici di QUESTA competizione sono aperti. LOCK UNICO per
+      // Qualifiche e Gara (non due sessioni indipendenti): il pronostico di
+      // gara non si può modificare dopo le qualifiche, quindi entrambe si
+      // chiudono nello stesso istante, all'inizio delle qualifiche. Gli admin
+      // possono sempre scrivere (correzioni manuali durante il weekend).
+      match /pronostici/{uid} {
+        allow read:  if isApprovato();
+        allow write: if (isApprovato() && request.auth.uid == uid && pronosticiAperti(compId)) || isAdmin();
+      }
+
+      // ── RISULTATI ───────────────────────────────────
+      match /risultati/{doc} {
+        allow read: if isApprovato();
+        allow write: if isAdmin(); // Admin inserisce i risultati a mano
+      }
+
+      // ── CLASSIFICA ──────────────────────────────────
+      match /classifica/{doc} {
+        allow read: if isApprovato();
+        allow write: if isAdmin(); // Cloud Function + ricalcolo manuale admin
+      }
+
+      // ── LIVE ────────────────────────────────────────
+      match /live/{doc} {
+        allow read: if isApprovato();
+        // Admin può scrivere; la Cloud Function usa l'Admin SDK e bypassa
+        // comunque le regole.
+        allow write: if isAdmin();
+      }
+
+      // ── SISTEMA / CONFIG ────────────────────────────
+      match /sistema/{doc} {
+        allow read:  if isAuth(); // anche non approvati (serve per sapere se pronostici aperti)
+        allow write: if isAdmin();
+      }
     }
 
-    // ── CLASSIFICA ────────────────────────────────────
-    match /classifica/{doc} {
-      allow read: if isApprovato();
-      allow write: if isAdmin(); // Cloud Function + ricalcolo manuale admin
-    }
-
-    // ── LIVE ──────────────────────────────────────────
-    match /live/{doc} {
-      allow read: if isApprovato();
-      // Admin può scrivere (form marcatori manuale); la Cloud Function usa
-      // l'Admin SDK e bypassa comunque le regole.
-      allow write: if isAdmin();
-    }
-
-    // ── SISTEMA / CONFIG ──────────────────────────────
-    match /sistema/{doc} {
-      allow read:  if isAuth(); // anche non approvati (serve per sapere se pronostici aperti)
-      allow write: if isAdmin();
-    }
+    // ── LEGACY (percorsi piatti pre-multi-competizione) ─
+    // Usati SOLO dallo script di migrazione una tantum che copia i dati del
+    // GP d'Italia (Monza) dai vecchi percorsi piatti a competizioni/monza/...
+    // Accesso ristretto agli admin: nessun client li legge più a regime.
+    // Da rimuovere da queste regole una volta completata e verificata la migrazione.
+    match /pronostici/{uid}  { allow read, write: if isAdmin(); }
+    match /risultati/{doc}   { allow read, write: if isAdmin(); }
+    match /classifica/{doc}  { allow read, write: if isAdmin(); }
+    match /live/{doc}        { allow read, write: if isAdmin(); }
+    match /sistema/{doc}     { allow read, write: if isAdmin(); }
   }
 }
