@@ -1,6 +1,8 @@
 /**
  * FORMULITO 2026 — functions/index.js
- * Cloud Functions per il GP d'Italia 2026 (Monza, weekend di test).
+ * Cloud Functions condivise da tutte le competizioni dell'app (GP d'Italia
+ * a Monza, GP di Madrid, ...): ogni competizione ha il proprio spazio dati
+ * sotto competizioni/{compId}/..., i partecipanti restano invece globali.
  *
  * A differenza di Medusino/Wimbledino, NON c'è sincronizzazione automatica dei
  * risultati da nessuna API esterna: per un test a evento singolo i risultati
@@ -9,7 +11,8 @@
  * richiamato da qui.
  *
  * Funzioni esportate:
- *   ricalcolaClassifica — trigger su risultati/ufficiali: ricalcola la classifica
+ *   ricalcolaClassifica — trigger su competizioni/{compId}/risultati/ufficiali:
+ *                          ricalcola la classifica di QUELLA competizione
  *   eliminaUtente       — callable (solo admin)
  */
 'use strict';
@@ -30,14 +33,15 @@ const REGION = 'europe-west1';
 // FUNZIONI ESPORTATE
 // ════════════════════════════════════════════════════════
 
-// 1. Ricalcolo classifica — su ogni scrittura di risultati/ufficiali.
+// 1. Ricalcolo classifica — su ogni scrittura di competizioni/{compId}/risultati/ufficiali.
 exports.ricalcolaClassifica = onDocumentWritten(
-  { document: 'risultati/ufficiali', region: REGION },
+  { document: 'competizioni/{compId}/risultati/ufficiali', region: REGION },
   async (event) => {
     try {
+      const { compId } = event.params;
       const data = event.data.after && event.data.after.data();
       if (!data) return;
-      await _aggiornaClassifica(data);
+      await _aggiornaClassifica(compId, data);
     } catch (e) { console.error('[ricalcolaClassifica]', e.message); }
   }
 );
@@ -55,10 +59,11 @@ exports.eliminaUtente = onCall({ region: REGION }, async (request) => {
 // RICALCOLO CLASSIFICA
 // ════════════════════════════════════════════════════════
 
-async function _aggiornaClassifica(risultati) {
+async function _aggiornaClassifica(compId, risultati) {
+  const compRef = db.collection('competizioni').doc(compId);
   const [pronSnap, partSnap] = await Promise.all([
-    db.collection('pronostici').get(),
-    db.collection('partecipanti').get(),
+    compRef.collection('pronostici').get(),
+    db.collection('partecipanti').get(), // globale: valido per tutte le competizioni
   ]);
 
   const nomi = {};
@@ -86,11 +91,11 @@ async function _aggiornaClassifica(risultati) {
     return 0;
   });
 
-  await db.doc('classifica/snapshot').set({
+  await compRef.collection('classifica').doc('snapshot').set({
     partecipanti,
     updatedAt: FieldValue.serverTimestamp(),
   });
-  console.log(`[classifica] aggiornata — ${partecipanti.length} partecipanti`);
+  console.log(`[classifica] ${compId}: aggiornata — ${partecipanti.length} partecipanti`);
 }
 
 // ════════════════════════════════════════════════════════
