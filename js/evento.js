@@ -1,34 +1,42 @@
 /**
  * FORMULITO — evento.js
- * Caricamento (con cache) del DB locale dell'evento (f1_db.json):
- * anagrafica piloti (22, 11 team), orari delle due sessioni (Qualifiche/Gara)
- * e categorie bonus gara. Tutti i moduli che hanno bisogno dei dati di gara
- * passano da qui.
+ * Caricamento (con cache) del DB locale dell'evento (f1_db.json / f1_db_madrid.json):
+ * anagrafica piloti, orari delle due sessioni (Qualifiche/Gara) e categorie
+ * bonus gara. Tutti i moduli che hanno bisogno dei dati di gara passano da qui.
+ *
+ * Ogni competizione ha il proprio file JSON (vedi js/competizioni.js): la
+ * cache è quindi tenuta per id-competizione, così cambiare competizione non
+ * richiede un nuovo fetch se il file era già stato caricato in precedenza.
  */
 
-let _cache = null;
-let _inflight = null;
+import { competizioneAttuale, getCompetizione } from './competizioni.js';
+
+let _cache = {};    // { [compId]: dbJson }
+let _inflight = {}; // { [compId]: Promise }
 
 /**
- * Carica il DB evento una sola volta e lo cachea.
+ * Carica il DB della competizione attuale una sola volta e lo cachea.
  * @returns {Promise<Object>}
  */
 export async function caricaEvento() {
-  if (_cache) return _cache;
-  if (_inflight) return _inflight;
-  _inflight = fetch('./f1_db.json', { cache: 'no-cache' })
+  const compId = competizioneAttuale();
+  if (_cache[compId]) return _cache[compId];
+  if (_inflight[compId]) return _inflight[compId];
+
+  const file = getCompetizione(compId).dbFile;
+  _inflight[compId] = fetch(file, { cache: 'no-cache' })
     .then(r => {
-      if (!r.ok) throw new Error('Impossibile caricare f1_db.json (' + r.status + ')');
+      if (!r.ok) throw new Error(`Impossibile caricare ${file} (${r.status})`);
       return r.json();
     })
-    .then(j => { _cache = j; _inflight = null; return j; })
-    .catch(err => { _inflight = null; throw err; });
-  return _inflight;
+    .then(j => { _cache[compId] = j; delete _inflight[compId]; return j; })
+    .catch(err => { delete _inflight[compId]; throw err; });
+  return _inflight[compId];
 }
 
-/** DB già caricato (o null). Per accesso sincrono dopo caricaEvento(). */
+/** DB già caricato per la competizione attuale (o null). Accesso sincrono dopo caricaEvento(). */
 export function eventoDb() {
-  return _cache;
+  return _cache[competizioneAttuale()] || null;
 }
 
 /** Nome leggibile di un pilota: "Nome Cognome" oppure l'id se non noto. */

@@ -41,6 +41,15 @@ export async function initClassifica() {
   } catch (_) {}
 }
 
+/** Ferma l'ascolto real-time (usato quando si cambia competizione). */
+export function cleanupClassifica() {
+  if (_unsub) { _unsub(); _unsub = null; }
+  _partecipanti = [];
+  _query = '';
+  const search = document.getElementById('classifica-search');
+  if (search) search.value = '';
+}
+
 // ── RENDER ────────────────────────────────────────────
 export function renderClassifica(partecipanti) {
   const container = document.getElementById('classifica-container');

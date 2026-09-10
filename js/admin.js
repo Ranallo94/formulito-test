@@ -33,6 +33,7 @@ let _parts = [];            // partecipanti
 let _pronostici_aperti = true;
 let _built = false;
 let _montepremiCfg = { quota: 0, percentuali: [60, 30, 10] };
+let _unsubSistema = null;
 
 const METODI_PAGAMENTO = ['Contanti', 'Bonifico', 'Satispay', 'PayPal', 'Revolut'];
 
@@ -70,10 +71,19 @@ export async function initAdmin() {
   try { await _renderSistema(); }          catch (e) { console.error('[admin] sistema', e); }
   try { await _renderMontepremi(); }       catch (e) { console.error('[admin] montepremi', e); }
 
-  onSistemaSnapshot((cfg) => {
+  if (_unsubSistema) _unsubSistema();
+  _unsubSistema = onSistemaSnapshot((cfg) => {
     _pronostici_aperti = cfg?.pronostici_aperti !== false;
     _aggiornaStatoSessioni();
   });
+}
+
+/** Ferma gli ascolti real-time (usato quando si cambia competizione). */
+export function cleanupAdmin() {
+  if (_unsubSistema) { _unsubSistema(); _unsubSistema = null; }
+  _built = false;
+  _db = null;
+  _ris = null;
 }
 
 // ── SHELL ─────────────────────────────────────────────

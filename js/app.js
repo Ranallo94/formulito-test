@@ -4,12 +4,13 @@
  */
 
 import { initAuth, registra, getCurrentUser, onAuthChange, logout } from './auth.js';
-import { initClassifica, renderClassifica } from './classifica.js';
+import { initClassifica, renderClassifica, cleanupClassifica } from './classifica.js';
 import { initPronostici, cleanupPronostici } from './pronostici.js';
-import { initLive } from './live.js';
-import { initAdmin } from './admin.js';
+import { initLive, cleanupLive } from './live.js';
+import { initAdmin, cleanupAdmin } from './admin.js';
 import { initProfilo } from './profilo.js';
 import { showToast } from './ui.js';
+import { getCompetizioni, getCompetizione, competizioneAttuale, setCompetizioneAttuale } from './competizioni.js';
 
 // ── STATO GLOBALE ──────────────────────────────────────
 export const STATE = {
@@ -18,6 +19,7 @@ export const STATE = {
   profiloUid: null,   // uid del profilo visualizzato (null = profilo personale)
   pronosticiAperti: true, // false quando i pronostici sono chiusi (aggiornato da pronostici.js)
   db: null,
+  competizioneId: competizioneAttuale(), // competizione attiva (vedi competizioni.js)
   _appInizializzata: false,
 };
 
@@ -159,6 +161,11 @@ async function mostraApp() {
     document.getElementById('nav-admin').style.display = '';
   }
 
+  // Selettore competizione (chi era già approvato è automaticamente valido
+  // per tutte le competizioni: nessuna nuova approvazione richiesta)
+  _initSelettoreCompetizione();
+  _aggiornaRegolamentoEvento();
+
   // Logout
   document.getElementById('btn-logout').addEventListener('click', async () => {
     await logout();
@@ -203,6 +210,62 @@ function _nascondiTutto() {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+}
+
+// ── SELETTORE COMPETIZIONE ─────────────────────────────
+// Stesso login, stessi partecipanti: chi è approvato lo è per tutte le
+// competizioni. Ogni competizione ha però la propria scheda pronostici,
+// risultati e classifica (classifiche NON cumulative tra loro).
+let _selettoreCompBound = false;
+
+function _initSelettoreCompetizione() {
+  const sel = document.getElementById('header-competizione');
+  if (!sel) return;
+
+  if (!sel.options.length) {
+    sel.innerHTML = getCompetizioni()
+      .map(c => `<option value="${c.id}">${c.nome}</option>`)
+      .join('');
+  }
+  sel.value = STATE.competizioneId;
+
+  if (!_selettoreCompBound) {
+    sel.addEventListener('change', () => cambiaCompetizione(sel.value));
+    _selettoreCompBound = true;
+  }
+}
+
+/**
+ * Cambia la competizione attiva: aggiorna lo stato/localStorage, azzera e
+ * ri-inizializza tutti i moduli che leggono dati Firestore per-competizione
+ * (classifica, risultati, pronostici, profilo, admin), senza toccare login
+ * o approvazione (che restano validi per tutte le competizioni).
+ */
+async function cambiaCompetizione(id) {
+  if (!setCompetizioneAttuale(id)) return; // id invalido o invariato
+  STATE.competizioneId = id;
+
+  cleanupClassifica();
+  cleanupLive();
+  cleanupPronostici();
+  if (STATE.utente?.isAdmin) cleanupAdmin();
+
+  showToast(`Competizione: ${getCompetizione(id).nome}`, 'info');
+
+  await initClassifica();
+  await initLive();
+  await initPronostici();
+  await initProfilo();
+  if (STATE.utente?.isAdmin) await initAdmin();
+  _aggiornaRegolamentoEvento();
+}
+
+// ── REGOLAMENTO: intro dinamica in base alla competizione attiva ──────
+function _aggiornaRegolamentoEvento() {
+  const el = document.getElementById('reg-intro-evento');
+  if (!el) return;
+  const c = getCompetizione(STATE.competizioneId);
+  el.innerHTML = `Formulito segue più competizioni con lo stesso login: questa scheda è per il <strong>${c.nomeEsteso}</strong>. Niente tabellone: il pronostico è un <strong>ordinamento di tutti i piloti</strong> per Qualifiche e per Gara, più 6 bonus di gara.`;
 }
 
 // ── ROUTER ─────────────────────────────────────────────
