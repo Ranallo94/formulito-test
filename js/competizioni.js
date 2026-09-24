@@ -28,6 +28,13 @@ export const COMPETIZIONI = [
     dbFile: './f1_db_madrid.json',
     ordine: 2,
   },
+  {
+    id: 'baku',
+    nome: 'GP Azerbaigian',
+    nomeEsteso: "GP dell'Azerbaigian 2026 · Baku City Circuit",
+    dbFile: './f1_db_baku.json',
+    ordine: 3,
+  },
 ];
 
 const STORAGE_KEY = 'formulito_competizione';
@@ -49,7 +56,9 @@ export function competizioneAttuale() {
   if (_attuale) return _attuale;
   let salvata = null;
   try { salvata = localStorage.getItem(STORAGE_KEY); } catch (_) { /* privato/incognito */ }
-  _attuale = COMPETIZIONI.some(c => c.id === salvata) ? salvata : getCompetizioni()[0].id;
+  // Default per chi non ha ancora scelto: la competizione più recente (ordine più alto)
+  const elenco = getCompetizioni();
+  _attuale = COMPETIZIONI.some(c => c.id === salvata) ? salvata : elenco[elenco.length - 1].id;
   return _attuale;
 }
 
