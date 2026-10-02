@@ -35,6 +35,13 @@ export const COMPETIZIONI = [
     dbFile: './f1_db_baku.json',
     ordine: 3,
   },
+  {
+    id: 'bahrain',
+    nome: 'GP Bahrain',
+    nomeEsteso: 'GP del Bahrain 2026 · Sepang International Circuit (Malesia)',
+    dbFile: './f1_db_bahrain.json',
+    ordine: 4,
+  },
 ];
 
 const STORAGE_KEY = 'formulito_competizione';
