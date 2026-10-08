@@ -2,11 +2,13 @@
  * FORMULITO — pronostici.js
  * Scheda pronostici.
  *
- * Tre sessioni possibili per weekend:
- *   • Qualifiche — ordinamento di tutti i 22 piloti (griglia di partenza prevista)
+ * Tre sessioni possibili per weekend, mostrate nell'ordine cronologico reale
+ * del weekend:
  *   • Sprint     — SOLO per i weekend che la prevedono (vedi competizioni.js →
  *                  sprint:true): ordinamento dei primi 8 all'arrivo, gli unici
- *                  che prendono punti ufficiali in Sprint
+ *                  che prendono punti ufficiali in Sprint. Si corre PRIMA
+ *                  delle Qualifiche, quindi è la prima tab quando presente.
+ *   • Qualifiche — ordinamento di tutti i 22 piloti (griglia di partenza prevista)
  *   • Gara       — ordinamento di tutti i 22 piloti (ordine di arrivo previsto)
  *                  + 6 campi bonus
  *
@@ -86,8 +88,8 @@ export async function initPronostici() {
     _applyLockState();
   });
 
-  _renderSessione('qualifica');
   if (haSprint()) _renderSessione('sprint');
+  _renderSessione('qualifica');
   _renderSessione('gara');
   _renderBonus();
 }
@@ -99,6 +101,8 @@ export function cleanupPronostici() {
 }
 
 // ── SHELL (header + tab + contenitori) ────────────────
+// Ordine cronologico reale del weekend: Sprint (quando presente) corre prima
+// delle Qualifiche, quindi è la prima tab e quella attiva di default.
 function _buildShell() {
   const page = document.getElementById('page-pronostici');
   const sprint = haSprint();
@@ -111,12 +115,24 @@ function _buildShell() {
     <div id="pronostici-banner" class="info-banner" style="display:none"></div>
 
     <div class="tab-bar" id="pronostici-tabs">
-      <button type="button" class="tab active" data-tab="pron-QUALI" data-round="qualifica">🏁 Qualifiche</button>
-      ${sprint ? `<button type="button" class="tab" data-tab="pron-SPRINT" data-round="sprint">⚡ Sprint</button>` : ''}
+      ${sprint ? `<button type="button" class="tab active" data-tab="pron-SPRINT" data-round="sprint">⚡ Sprint</button>` : ''}
+      <button type="button" class="tab${sprint ? '' : ' active'}" data-tab="pron-QUALI" data-round="qualifica">🏁 Qualifiche</button>
       <button type="button" class="tab" data-tab="pron-GARA" data-round="gara">🏆 Gara</button>
     </div>
 
-    <div id="pron-QUALI" class="tab-content active">
+    ${sprint ? `
+    <div id="pron-SPRINT" class="tab-content active">
+      <div class="round-head"><h3 class="section-title">⚡ Sprint · primi 8 all'arrivo previsti</h3>
+        <span class="round-progress" id="prog-sprint"></span></div>
+      <p class="text-muted">Qui si pronosticano SOLO i primi 8 all'arrivo: sono gli unici che prendono punti nella Sprint ufficiale.</p>
+      <div id="round-sprint" class="grid-form"></div>
+      <div class="elim-save-row">
+        <button type="button" class="btn-salva-fase" data-save="sprint">💾 Salva Sprint</button>
+        <span class="elim-save-msg" id="msg-sprint"></span>
+      </div>
+    </div>` : ''}
+
+    <div id="pron-QUALI" class="tab-content${sprint ? '' : ' active'}">
       <div class="round-head"><h3 class="section-title">🏁 Qualifiche · griglia di partenza prevista</h3>
         <span class="round-progress" id="prog-qualifica"></span></div>
       <p class="text-muted">Indica, posizione per posizione, chi pensi partirà in pole (1ª) e via via tutti gli altri piloti.</p>
@@ -130,18 +146,6 @@ function _buildShell() {
         <span class="elim-save-msg" id="msg-qualifica"></span>
       </div>
     </div>
-
-    ${sprint ? `
-    <div id="pron-SPRINT" class="tab-content">
-      <div class="round-head"><h3 class="section-title">⚡ Sprint · primi 8 all'arrivo previsti</h3>
-        <span class="round-progress" id="prog-sprint"></span></div>
-      <p class="text-muted">Qui si pronosticano SOLO i primi 8 all'arrivo: sono gli unici che prendono punti nella Sprint ufficiale.</p>
-      <div id="round-sprint" class="grid-form"></div>
-      <div class="elim-save-row">
-        <button type="button" class="btn-salva-fase" data-save="sprint">💾 Salva Sprint</button>
-        <span class="elim-save-msg" id="msg-sprint"></span>
-      </div>
-    </div>` : ''}
 
     <div id="pron-GARA" class="tab-content">
       <div class="round-head"><h3 class="section-title">🏆 Gara · ordine di arrivo previsto</h3>
@@ -317,7 +321,7 @@ function _applyLockState() {
   const page = document.getElementById('page-pronostici');
   if (!page) return;
 
-  const sessioniLabel = haSprint() ? 'Qualifiche, Sprint e Gara' : 'Qualifiche e Gara';
+  const sessioniLabel = haSprint() ? 'Sprint, Qualifiche e Gara' : 'Qualifiche e Gara';
 
   if (_pronostici_aperti) {
     if (banner) banner.style.display = 'none';
@@ -331,10 +335,10 @@ function _applyLockState() {
     if (status) status.textContent = 'Pronostici chiusi';
   }
 
-  const quali  = document.getElementById('pron-QUALI');
   const sprint = document.getElementById('pron-SPRINT');
+  const quali  = document.getElementById('pron-QUALI');
   const gara   = document.getElementById('pron-GARA');
-  [quali, sprint, gara].forEach((box) => {
+  [sprint, quali, gara].forEach((box) => {
     if (!box) return;
     box.querySelectorAll('.grid-select, .bonus-select, .bonus-num').forEach(el => {
       if (_pronostici_aperti) el.removeAttribute('disabled'); else el.setAttribute('disabled', 'disabled');
