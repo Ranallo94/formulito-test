@@ -6,9 +6,13 @@
  *
  * A differenza di Medusino/Wimbledino, NON c'è sincronizzazione automatica dei
  * risultati da nessuna API esterna: per un test a evento singolo i risultati
- * (griglia di qualifica, ordine di arrivo, bonus) sono inseriti a mano
- * dall'admin dal pannello. functions/espn.js è stato svuotato e non è più
- * richiamato da qui.
+ * (griglia di qualifica, ordine di arrivo, bonus, e — nei weekend che la
+ * prevedono — i primi 8 della Sprint) sono inseriti a mano dall'admin dal
+ * pannello. functions/espn.js è stato svuotato e non è più richiamato da qui.
+ *
+ * compId viene passato a calcolaPunteggio() così punteggi.js sa, tramite
+ * competizioni.js → haSprint(compId), se includere i punti Sprint nel
+ * calcolo (solo per i weekend che la prevedono, es. Singapore).
  *
  * Funzioni esportate:
  *   ricalcolaClassifica — trigger su competizioni/{compId}/risultati/ufficiali:
@@ -78,7 +82,7 @@ async function _aggiornaClassifica(compId, risultati) {
     .filter((d) => !disabilitati.has(d.id) && !!nomi[d.id])
     .map((d) => {
       const pr = d.data();
-      const { totale, breakdown, spareggio } = calcolaPunteggio(pr, risultati);
+      const { totale, breakdown, spareggio } = calcolaPunteggio(pr, risultati, compId);
       return { id: d.id, nome: nomi[d.id] || d.id, totale, breakdown, spareggio };
     });
 

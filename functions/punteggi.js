@@ -4,18 +4,30 @@
  * le Cloud Functions non usano i moduli ES.
  *
  * Il pronostico è un ORDINAMENTO di tutti i 22 piloti per Qualifiche e Gara,
- * più 6 bonus di gara. Vedi js/punteggi.js per la spiegazione dettagliata
- * della formula (identica qui).
+ * più 6 bonus di gara, più — SOLO nei weekend con Sprint (vedi
+ * competizioni.js → haSprint) — un ordinamento dei primi 8 all'arrivo in
+ * Sprint (punti ufficiali 8-7-6-5-4-3-2-1 sulla posizione esatta, +1 se
+ * pronostichi un pilota a podio Sprint e arriva a podio). Vedi js/punteggi.js
+ * per la spiegazione dettagliata della formula (identica qui).
+ *
+ * A differenza della versione client, qui calcolaPunteggio() riceve il
+ * compId esplicitamente (passato dal trigger Firestore in index.js): le
+ * Cloud Functions non hanno uno stato "competizione attuale" letto da
+ * localStorage come js/competizioni.js lato client.
  */
 'use strict';
 
 const DB = require('./f1_db.json');
+const { haSprint } = require('./competizioni.js');
+
 const N_PILOTI = 22;
+const N_SPRINT = 8;
 
 // ── GRIGLIA HELPERS (porting da js/griglia.js) ────────────────────────
-function normalizzaOrdine(arr) {
-  const out = Array.isArray(arr) ? arr.slice(0, N_PILOTI) : [];
-  while (out.length < N_PILOTI) out.push(null);
+function normalizzaOrdine(arr, n) {
+  const len = n || N_PILOTI;
+  const out = Array.isArray(arr) ? arr.slice(0, len) : [];
+  while (out.length < len) out.push(null);
   return out.map((v) => v || null);
 }
 
@@ -33,6 +45,10 @@ const QUALI_VICINO_PUNTI = 1;
 const POSIZIONE_PUNTI_F1 = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const GARA_BONUS_PODIO = 3;
 const GARA_BONUS_PUNTI = 1;
+
+// Sprint: punti ufficiali per posizione esatta (P1..P8) + bonus podio ridotto
+const POSIZIONE_PUNTI_SPRINT = [8, 7, 6, 5, 4, 3, 2, 1];
+const SPRINT_BONUS_PODIO = 1;
 
 const BONUS_PUNTI = {
   giroVeloce: 5,
@@ -83,6 +99,26 @@ function calcolaGara(arrivoPron, arrivoReale) {
   return { punti, vincitoreOk };
 }
 
+/** Sprint: posizione esatta (punti ufficiali 8..1) + bonus podio (+1), solo sugli 8 piloti pronosticati. */
+function calcolaSprint(top8Pron, top8Reale) {
+  const posReale = mappaPosizioni(top8Reale);
+  let punti = 0;
+
+  top8Pron.forEach((pid, i) => {
+    if (!pid) return;
+    const pr = Object.prototype.hasOwnProperty.call(posReale, pid) ? posReale[pid] : null;
+    if (pr == null) return;
+
+    let pt = 0;
+    if (i === pr) pt += POSIZIONE_PUNTI_SPRINT[pr] || 0;
+    if (i < 3 && pr < 3) pt += SPRINT_BONUS_PODIO;
+
+    punti += pt;
+  });
+
+  return { punti };
+}
+
 function calcolaBonus(bonusPron, bonusReale) {
   let punti = 0, indovinati = 0;
 
@@ -108,8 +144,13 @@ function calcolaBonus(bonusPron, bonusReale) {
  * Calcola il punteggio completo di un pronostico.
  * @param {Object} pron       documento pronostici/{uid}
  * @param {Object} risultati  documento risultati/ufficiali
+ * @param {string} [compId]   id della competizione: determina se includere lo
+ *                             Sprint (vedi competizioni.js → haSprint). Se
+ *                             omesso, lo Sprint non viene calcolato — stesso
+ *                             comportamento di prima, sicuro per le
+ *                             competizioni che non lo prevedono.
  */
-function calcolaPunteggio(pron, risultati) {
+function calcolaPunteggio(pron, risultati, compId) {
   const grigliaPron  = normalizzaOrdine(pron && pron.qualifica && pron.qualifica.griglia);
   const grigliaReale = normalizzaOrdine(risultati && risultati.qualifica && risultati.qualifica.griglia);
   const arrivoPron   = normalizzaOrdine(pron && pron.gara && pron.gara.arrivo);
@@ -121,10 +162,18 @@ function calcolaPunteggio(pron, risultati) {
   const gara  = calcolaGara(arrivoPron, arrivoReale);
   const bonus = calcolaBonus(bonusPron, bonusReale);
 
-  const totale = quali.punti + gara.punti + bonus.punti;
-  const poleOk = grigliaPron[0] && grigliaReale[0] && grigliaPron[0] === grigliaReale[0];
-
+  let totale = quali.punti + gara.punti + bonus.punti;
   const breakdown = { qualifica: quali.punti, gara: gara.punti, bonus: bonus.punti };
+
+  if (compId && haSprint(compId)) {
+    const top8Pron  = normalizzaOrdine(pron && pron.sprint && pron.sprint.top8, N_SPRINT);
+    const top8Reale = normalizzaOrdine(risultati && risultati.sprint && risultati.sprint.top8, N_SPRINT);
+    const sprint = calcolaSprint(top8Pron, top8Reale);
+    breakdown.sprint = sprint.punti;
+    totale += sprint.punti;
+  }
+
+  const poleOk = grigliaPron[0] && grigliaReale[0] && grigliaPron[0] === grigliaReale[0];
   const spareggio = [gara.vincitoreOk ? 1 : 0, poleOk ? 1 : 0, bonus.indovinati];
 
   return { totale, breakdown, spareggio };
