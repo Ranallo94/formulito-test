@@ -265,7 +265,8 @@ function _aggiornaRegolamentoEvento() {
   const el = document.getElementById('reg-intro-evento');
   if (!el) return;
   const c = getCompetizione(STATE.competizioneId);
-  el.innerHTML = `Formulito segue più competizioni con lo stesso login: questa scheda è per il <strong>${c.nomeEsteso}</strong>. Niente tabellone: il pronostico è un <strong>ordinamento di tutti i piloti</strong> per Qualifiche e per Gara, più 6 bonus di gara.`;
+  const sprintTxt = c.sprint ? ', un ordinamento dei primi 8 per la <strong>Sprint</strong>' : '';
+  el.innerHTML = `Formulito segue più competizioni con lo stesso login: questa scheda è per il <strong>${c.nomeEsteso}</strong>. Niente tabellone: il pronostico è un <strong>ordinamento di tutti i piloti</strong> per Qualifiche e per Gara${sprintTxt}, più 6 bonus di gara.`;
 }
 
 // ── ROUTER ─────────────────────────────────────────────

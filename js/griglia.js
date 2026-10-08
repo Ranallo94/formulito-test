@@ -1,12 +1,19 @@
 /**
  * FORMULITO — griglia.js
  * Modello di pronostico: non c'è tabellone, il pronostico è un ORDINAMENTO
- * di tutti i 22 piloti per due sessioni indipendenti (Qualifiche e Gara),
- * più i bonus di gara.
+ * di tutti i 22 piloti per Qualifiche e Gara, più i bonus di gara.
+ *
+ * SPRINT (solo per i weekend che la prevedono, vedi competizioni.js →
+ * sprint:true): non è un ordinamento di tutti i piloti ma SOLO dei primi 8
+ * all'arrivo — gli unici che prendono punti ufficiali in Sprint. Stessa
+ * logica di select a cascata delle altre due sessioni, solo su un array più
+ * corto (N_SPRINT invece di N_PILOTI): per questo normalizzaOrdine/nuovoOrdine
+ * accettano una lunghezza opzionale.
  *
  * Documento pronostici/{uid}:
  *   {
  *     qualifica: { griglia: [pid_1a, pid_2a, ..., pid_22a] },   // indice 0 = pole
+ *     sprint: { top8: [pid_1a, ..., pid_8a] },                  // SOLO se la competizione la prevede, indice 0 = vincitore Sprint
  *     gara: {
  *       arrivo: [pid_1a, ..., pid_22a],                          // indice 0 = vincitore
  *       bonus: { giroVeloce, pitStopVeloce, gommaLunga, primoRitirato, safetyCar, maggiorGuadagno }
@@ -15,22 +22,23 @@
  *
  * Documento risultati/ufficiali: stessa struttura, con i dati REALI (compilati dall'admin).
  *
- * L'ordinamento è gestito con 22 <select> a cascata: scegliendo un pilota in una
+ * L'ordinamento è gestito con N <select> a cascata: scegliendo un pilota in una
  * posizione, se era già assegnato altrove viene liberato automaticamente lì,
  * cosicché non si possano mai avere duplicati nello stesso ordinamento.
  */
 
 export const N_PILOTI = 22;
+export const N_SPRINT = 8;
 
-/** Array di 22 posizioni vuote. */
-export function nuovoOrdine() {
-  return new Array(N_PILOTI).fill(null);
+/** Array di `n` posizioni vuote (default: tutti i piloti). */
+export function nuovoOrdine(n = N_PILOTI) {
+  return new Array(n).fill(null);
 }
 
-/** Normalizza un ordinamento salvato: garantisce lunghezza 22. */
-export function normalizzaOrdine(arr) {
-  const out = Array.isArray(arr) ? arr.slice(0, N_PILOTI) : [];
-  while (out.length < N_PILOTI) out.push(null);
+/** Normalizza un ordinamento salvato: garantisce lunghezza `n` (default: tutti i piloti). */
+export function normalizzaOrdine(arr, n = N_PILOTI) {
+  const out = Array.isArray(arr) ? arr.slice(0, n) : [];
+  while (out.length < n) out.push(null);
   return out.map(v => v || null);
 }
 
@@ -54,11 +62,11 @@ export function setInPosizione(ordine, index, pid) {
   return out;
 }
 
-/** true se l'ordinamento è completo: 22 posizioni, tutte diverse, nessun vuoto. */
-export function ordineCompleto(ordine) {
-  if (!Array.isArray(ordine) || ordine.length !== N_PILOTI) return false;
+/** true se l'ordinamento è completo: `n` posizioni, tutte diverse, nessun vuoto. */
+export function ordineCompleto(ordine, n = N_PILOTI) {
+  if (!Array.isArray(ordine) || ordine.length !== n) return false;
   if (ordine.some(v => !v)) return false;
-  return new Set(ordine).size === N_PILOTI;
+  return new Set(ordine).size === n;
 }
 
 /** Quante posizioni sono state compilate (non nulle). */
@@ -83,22 +91,34 @@ export function getArrivoGara(doc) {
 export function getBonusGara(doc) {
   return doc?.gara?.bonus || {};
 }
+export function getTop8Sprint(doc) {
+  return normalizzaOrdine(doc?.sprint?.top8, N_SPRINT);
+}
 
-/** Prepara l'oggetto pronostici pronto per il salvataggio (senza updatedAt). */
+/**
+ * Prepara l'oggetto pronostici pronto per il salvataggio (senza updatedAt).
+ * Il campo `sprint` viene scritto SOLO se presente nell'oggetto in memoria
+ * (lo inizializza pronostici.js solo per le competizioni con sprint:true),
+ * così il documento resta "pulito" per i weekend normali.
+ */
 export function serializzaPronostico(pron) {
-  return {
+  const out = {
     qualifica: { griglia: normalizzaOrdine(pron?.qualifica?.griglia) },
     gara: {
       arrivo: normalizzaOrdine(pron?.gara?.arrivo),
       bonus: { ...(pron?.gara?.bonus || {}) },
     },
   };
+  if (pron?.sprint) {
+    out.sprint = { top8: normalizzaOrdine(pron.sprint.top8, N_SPRINT) };
+  }
+  return out;
 }
 
 // ── Render read-only di un ordinamento (per profilo.js / live.js) ───────
 /**
  * @param {HTMLElement} container
- * @param {Array} ordine   22 pid (o meno se incompleto)
+ * @param {Array} ordine   N pid (o meno se incompleto)
  * @param {Object} db      DB evento
  * @param {Object} opts    { evidenziaCorrette: Array<pid> di posizioni esatte da segnare con ✅ }
  */

@@ -3,10 +3,11 @@
  * Pagina "Il mio profilo" (e scheda di un altro partecipante, via STATE.profiloUid).
  *
  * Due sotto-schede:
- *   • Riepilogo — punti Qualifiche / Gara / Bonus + pole e vincitore pronosticati,
+ *   • Riepilogo — punti Qualifiche / Sprint (solo se previsto) / Gara / Bonus
+ *                 + pole, vincitore Sprint e vincitore gara pronosticati,
  *                 con stato rispetto ai risultati ufficiali.
- *   • Griglie   — le due griglie pronosticate (Qualifiche e Gara), con le
- *                 posizioni esatte evidenziate in verde.
+ *   • Griglie   — le griglie pronosticate (Qualifiche, Sprint se previsto,
+ *                 Gara), con le posizioni esatte evidenziate in verde.
  *
  * Privacy: qui non c'è un interruttore "nascondi pronostico" come in Medusino
  * (test a evento singolo, tra amici): le griglie di tutti sono sempre visibili
@@ -16,8 +17,9 @@
 import { STATE, navigaA } from './app.js';
 import { getClassifica, getPronostici, getRisultati } from './db.js';
 import { caricaEvento, nomePilota } from './evento.js';
-import { normalizzaOrdine, mappaPosizioni, renderOrdineReadOnly } from './griglia.js';
+import { normalizzaOrdine, mappaPosizioni, renderOrdineReadOnly, N_SPRINT } from './griglia.js';
 import { calcolaPunteggio } from './punteggi.js';
+import { haSprint } from './competizioni.js';
 
 let _tabsBound = false;
 
@@ -28,6 +30,7 @@ export async function initProfilo() {
 
   const targetUid = STATE.profiloUid || STATE.utente.id;
   const isMe = targetUid === STATE.utente.id;
+  const sprintAttivo = haSprint();
 
   _bindInnerTabs();
   _resetInnerTabs();
@@ -52,11 +55,18 @@ export async function initProfilo() {
     pron.qualifica.griglia = normalizzaOrdine(pron.qualifica.griglia);
     pron.gara.arrivo = normalizzaOrdine(pron.gara.arrivo);
     if (!pron.gara.bonus) pron.gara.bonus = {};
+    if (sprintAttivo) {
+      if (!pron.sprint) pron.sprint = {};
+      pron.sprint.top8 = normalizzaOrdine(pron.sprint.top8, N_SPRINT);
+    }
 
     const risNorm = {
       qualifica: { griglia: normalizzaOrdine(risultati?.qualifica?.griglia) },
       gara: { arrivo: normalizzaOrdine(risultati?.gara?.arrivo), bonus: risultati?.gara?.bonus || {} },
     };
+    if (sprintAttivo) {
+      risNorm.sprint = { top8: normalizzaOrdine(risultati?.sprint?.top8, N_SPRINT) };
+    }
 
     const title = document.getElementById('profilo-page-title');
     if (title) title.textContent = isMe ? '📊 Il mio profilo' : `📊 ${nome}`;
@@ -125,7 +135,7 @@ function _renderScoreCard(me, nome, isMe, classifica) {
     </div>`;
 }
 
-// ── RIEPILOGO: punti Qualifiche / Gara / Bonus ────────
+// ── RIEPILOGO: punti Qualifiche / Sprint / Gara / Bonus ───
 function _renderBreakdown(me, pron, ris, db) {
   const box = document.getElementById('profilo-breakdown');
   if (!box) return;
@@ -133,7 +143,9 @@ function _renderBreakdown(me, pron, ris, db) {
   let breakdown = me?.breakdown;
   if (!breakdown) breakdown = calcolaPunteggio(pron, ris).breakdown;
 
-  const totale = (breakdown.qualifica || 0) + (breakdown.gara || 0) + (breakdown.bonus || 0);
+  const sprintAttivo = haSprint();
+  const totale = (breakdown.qualifica || 0) + (breakdown.gara || 0) + (breakdown.bonus || 0)
+    + (sprintAttivo ? (breakdown.sprint || 0) : 0);
 
   box.innerHTML = `
     <div class="prof-card">
@@ -142,6 +154,7 @@ function _renderBreakdown(me, pron, ris, db) {
         <thead><tr><th>Categoria</th><th>Punti</th></tr></thead>
         <tbody>
           <tr class="prof-bd-row"><td class="prof-bd-turno">🏁 Qualifiche</td><td class="prof-bd-num">${breakdown.qualifica || 0}</td></tr>
+          ${sprintAttivo ? `<tr class="prof-bd-row"><td class="prof-bd-turno">⚡ Sprint</td><td class="prof-bd-num">${breakdown.sprint || 0}</td></tr>` : ''}
           <tr class="prof-bd-row"><td class="prof-bd-turno">🏆 Gara</td><td class="prof-bd-num">${breakdown.gara || 0}</td></tr>
           <tr class="prof-bd-row"><td class="prof-bd-turno">🎯 Bonus</td><td class="prof-bd-num">${breakdown.bonus || 0}</td></tr>
         </tbody>
@@ -150,16 +163,19 @@ function _renderBreakdown(me, pron, ris, db) {
     </div>`;
 }
 
-// ── RIEPILOGO: pronostici chiave (pole + vincitore) ───
+// ── RIEPILOGO: pronostici chiave (pole + vincitore Sprint + vincitore gara) ──
 function _renderKeyPicks(pron, ris, db) {
   const box = document.getElementById('profilo-keypicks');
   if (!box) return;
 
+  const sprintAttivo = haSprint();
   const posQualiReale = mappaPosizioni(ris.qualifica.griglia);
   const posGaraReale = mappaPosizioni(ris.gara.arrivo);
+  const posSprintReale = sprintAttivo ? mappaPosizioni(ris.sprint.top8) : {};
 
   const poleId = pron.qualifica.griglia[0];
   const vincId = pron.gara.arrivo[0];
+  const vincSprintId = sprintAttivo ? (pron.sprint?.top8?.[0] || null) : null;
 
   const chip = (pid, mappa) => {
     if (!pid) return '<span class="text-muted">— non pronosticato</span>';
@@ -178,6 +194,11 @@ function _renderKeyPicks(pron, ris, db) {
           <div class="prof-key-label">🏁 Pole position</div>
           <div class="prof-chips">${chip(poleId, posQualiReale)}</div>
         </div>
+        ${sprintAttivo ? `
+        <div class="prof-key-group">
+          <div class="prof-key-label">⚡ Vincitore Sprint</div>
+          <div class="prof-chips">${chip(vincSprintId, posSprintReale)}</div>
+        </div>` : ''}
         <div class="prof-key-group">
           <div class="prof-key-label">🏆 Vincitore gara</div>
           <div class="prof-chips">${chip(vincId, posGaraReale)}</div>
@@ -221,8 +242,10 @@ function _renderGriglie(pron, ris, db) {
   const box = document.getElementById('profilo-griglie-container');
   if (!box) return;
 
+  const sprintAttivo = haSprint();
   const posQualiReale = mappaPosizioni(ris.qualifica.griglia);
   const posGaraReale = mappaPosizioni(ris.gara.arrivo);
+  const posSprintReale = sprintAttivo ? mappaPosizioni(ris.sprint.top8) : {};
 
   const correttiQuali = pron.qualifica.griglia
     .map((pid, i) => (pid && posQualiReale[pid] === i) ? pid : null)
@@ -230,6 +253,9 @@ function _renderGriglie(pron, ris, db) {
   const correttiGara = pron.gara.arrivo
     .map((pid, i) => (pid && posGaraReale[pid] === i) ? pid : null)
     .filter(Boolean);
+  const correttiSprint = sprintAttivo
+    ? (pron.sprint?.top8 || []).map((pid, i) => (pid && posSprintReale[pid] === i) ? pid : null).filter(Boolean)
+    : [];
 
   box.innerHTML = `
     <div class="prof-legend">
@@ -240,6 +266,11 @@ function _renderGriglie(pron, ris, db) {
         <h3 class="prof-card-title">🏁 Qualifiche</h3>
         <div id="profilo-griglia-quali"></div>
       </div>
+      ${sprintAttivo ? `
+      <div class="prof-card">
+        <h3 class="prof-card-title">⚡ Sprint</h3>
+        <div id="profilo-griglia-sprint"></div>
+      </div>` : ''}
       <div class="prof-card">
         <h3 class="prof-card-title">🏆 Gara</h3>
         <div id="profilo-griglia-gara"></div>
@@ -247,6 +278,9 @@ function _renderGriglie(pron, ris, db) {
     </div>`;
 
   renderOrdineReadOnly(document.getElementById('profilo-griglia-quali'), pron.qualifica.griglia, db, { evidenziaCorrette: correttiQuali });
+  if (sprintAttivo) {
+    renderOrdineReadOnly(document.getElementById('profilo-griglia-sprint'), pron.sprint.top8, db, { evidenziaCorrette: correttiSprint });
+  }
   renderOrdineReadOnly(document.getElementById('profilo-griglia-gara'), pron.gara.arrivo, db, { evidenziaCorrette: correttiGara });
 }
 

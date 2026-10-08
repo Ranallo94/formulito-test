@@ -9,8 +9,14 @@
  * partecipanti restano invece globali (partecipanti/{uid}): chi è già
  * approvato per una competizione lo è automaticamente per tutte.
  *
+ * Il flag `sprint: true` segnala i weekend con gara Sprint (vedi
+ * pronostici.js / live.js / admin.js / profilo.js / punteggi.js): in quel
+ * caso compare una terza scheda (solo primi 8 all'arrivo). Tutti i moduli
+ * che hanno bisogno di saperlo leggono haSprint(), senza duplicare il check.
+ *
  * Modulo volutamente senza dipendenze (nessun import), così può essere
- * importato sia da db.js/evento.js sia da app.js senza rischio di cicli.
+ * importato sia da db.js/evento.js/punteggi.js sia da app.js senza rischio
+ * di cicli.
  */
 
 export const COMPETIZIONI = [
@@ -41,6 +47,14 @@ export const COMPETIZIONI = [
     nomeEsteso: 'GP del Bahrain 2026 · Sepang International Circuit (Malesia)',
     dbFile: './f1_db_bahrain.json',
     ordine: 4,
+  },
+  {
+    id: 'singapore',
+    nome: 'GP Singapore',
+    nomeEsteso: 'GP di Singapore 2026 · Marina Bay Street Circuit',
+    dbFile: './f1_db_singapore.json',
+    ordine: 5,
+    sprint: true, // weekend con Sprint: terza scheda (solo top 8), vedi punteggi.js
   },
 ];
 
@@ -76,4 +90,9 @@ export function setCompetizioneAttuale(id) {
   _attuale = id;
   try { localStorage.setItem(STORAGE_KEY, id); } catch (_) { /* privato/incognito */ }
   return cambiata;
+}
+
+/** true se la competizione indicata (default: quella attuale) prevede la Sprint. */
+export function haSprint(id = competizioneAttuale()) {
+  return getCompetizione(id).sprint === true;
 }

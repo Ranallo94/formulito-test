@@ -1,19 +1,22 @@
 /**
  * FORMULITO — live.js
- * Pagina "Risultati": risultati UFFICIALI del GP d'Italia 2026, in sola lettura.
+ * Pagina "Risultati": risultati UFFICIALI del weekend, in sola lettura.
  *
  * I risultati sono in Firestore (risultati/ufficiali), inseriti a mano
  * dall'admin (niente sync automatico per la F1). Stessa forma dei
- * pronostici: { qualifica:{griglia}, gara:{arrivo,bonus} }.
+ * pronostici: { qualifica:{griglia}, sprint:{top8} (solo se previsto),
+ * gara:{arrivo,bonus} }.
  *
  * Struttura della pagina:
  *   • tab Qualifiche: griglia di partenza reale
+ *   • tab Sprint (solo se competizioni.js → sprint:true): primi 8 reali
  *   • tab Gara: ordine di arrivo reale + esiti bonus
  */
 
 import { onRisultatiSnapshot } from './db.js';
 import { caricaEvento, nomePilota } from './evento.js';
-import { normalizzaOrdine } from './griglia.js';
+import { normalizzaOrdine, N_SPRINT } from './griglia.js';
+import { haSprint } from './competizioni.js';
 import { teamBadge, infoBtn, openSchedaPilota } from './pilota.js';
 import { formatDate } from './ui.js';
 
@@ -47,6 +50,7 @@ export async function initLive() {
 
   _buildShell();
   _built = true;
+  _activeTab = 'qualifica';
 
   if (_unsubRis) _unsubRis();
   _unsubRis = onRisultatiSnapshot((ris) => {
@@ -56,6 +60,12 @@ export async function initLive() {
     _ris.qualifica.griglia = normalizzaOrdine(_ris.qualifica.griglia);
     _ris.gara.arrivo = normalizzaOrdine(_ris.gara.arrivo);
     if (!_ris.gara.bonus) _ris.gara.bonus = {};
+    if (haSprint()) {
+      if (!_ris.sprint) _ris.sprint = {};
+      _ris.sprint.top8 = normalizzaOrdine(_ris.sprint.top8, N_SPRINT);
+    } else {
+      delete _ris.sprint;
+    }
     _renderAttivo();
     _renderUpdated(ris?.updatedAt);
   });
@@ -69,6 +79,7 @@ export function cleanupLive() {
 
 function _buildShell() {
   const page = document.getElementById('page-live');
+  const sprint = haSprint();
   page.innerHTML = `
     <div class="page-header">
       <h2 class="page-title">📊 Risultati</h2>
@@ -76,6 +87,7 @@ function _buildShell() {
     </div>
     <div class="tab-bar" id="risultati-tabs">
       <button type="button" class="tab active" data-tab="ris-QUALI" data-round="qualifica">🏁 Qualifiche</button>
+      ${sprint ? `<button type="button" class="tab" data-tab="ris-SPRINT" data-round="sprint">⚡ Sprint</button>` : ''}
       <button type="button" class="tab" data-tab="ris-GARA" data-round="gara">🏆 Gara</button>
     </div>
     <div id="ris-QUALI" class="tab-content active">
@@ -83,6 +95,12 @@ function _buildShell() {
         <span class="round-progress" id="risprog-qualifica"></span></div>
       <div id="risround-qualifica" class="grid-form"></div>
     </div>
+    ${sprint ? `
+    <div id="ris-SPRINT" class="tab-content">
+      <div class="round-head"><h3 class="section-title">⚡ Primi 8 Sprint reali</h3>
+        <span class="round-progress" id="risprog-sprint"></span></div>
+      <div id="risround-sprint" class="grid-form"></div>
+    </div>` : ''}
     <div id="ris-GARA" class="tab-content">
       <div class="round-head"><h3 class="section-title">🏆 Ordine di arrivo reale</h3>
         <span class="round-progress" id="risprog-gara"></span></div>
@@ -100,19 +118,26 @@ function _buildShell() {
 function _renderAttivo() {
   if (!_built || !_ris) return;
   if (_activeTab === 'gara') { _renderSessione('gara'); _renderBonus(); }
+  else if (_activeTab === 'sprint') { _renderSessione('sprint'); }
   else _renderSessione('qualifica');
+}
+
+function _campoRis(sessione) {
+  if (sessione === 'qualifica') return _ris.qualifica.griglia;
+  if (sessione === 'sprint') return _ris.sprint.top8;
+  return _ris.gara.arrivo;
 }
 
 function _renderSessione(sessione) {
   const box = document.getElementById('risround-' + sessione);
   if (!box) return;
-  const campo = sessione === 'qualifica' ? _ris.qualifica.griglia : _ris.gara.arrivo;
+  const campo = _campoRis(sessione);
 
   let html = '';
   let compilati = 0;
   campo.forEach((pid, i) => {
     if (pid) compilati++;
-    const etichetta = sessione === 'qualifica' ? (i === 0 ? 'Pole' : `P${i + 1}`) : (i === 0 ? 'Vincitore' : `P${i + 1}`);
+    const etichetta = i === 0 ? (sessione === 'qualifica' ? 'Pole' : 'Vincitore') : `P${i + 1}`;
     html += `<div class="grid-row grid-row--ro">
       <span class="grid-row-pos">${etichetta}</span>
       ${pid

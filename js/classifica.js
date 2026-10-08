@@ -162,15 +162,17 @@ function _aggiornaProfilo(sorted) {
 // ── BREAKDOWN INLINE ──────────────────────────────────
 function _renderBreakdownInline(bd) {
   if (!bd) return '';
-  // Breakdown F1: { qualifica, gara, bonus }
+  // Breakdown F1: { qualifica, sprint (solo weekend Sprint), gara, bonus }
   const voci = [
     { label: 'Qualifiche', punti: bd.qualifica || 0 },
-    { label: 'Gara',       punti: bd.gara      || 0 },
-    { label: 'Bonus',      punti: bd.bonus     || 0 },
-  ].filter(v => v.punti > 0);
+  ];
+  if (bd.sprint != null) voci.push({ label: 'Sprint', punti: bd.sprint || 0 });
+  voci.push({ label: 'Gara', punti: bd.gara || 0 });
+  voci.push({ label: 'Bonus', punti: bd.bonus || 0 });
 
-  if (!voci.length) return '<span class="bd-empty">nessun punto ancora</span>';
-  return voci.map(v => `<span class="bd-chip">${v.label}: <strong>${v.punti}</strong></span>`).join('');
+  const filtered = voci.filter(v => v.punti > 0);
+  if (!filtered.length) return '<span class="bd-empty">nessun punto ancora</span>';
+  return filtered.map(v => `<span class="bd-chip">${v.label}: <strong>${v.punti}</strong></span>`).join('');
 }
 
 // ── HELPERS ───────────────────────────────────────────

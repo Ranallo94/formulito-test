@@ -1,17 +1,20 @@
 /**
  * FORMULITO — admin.js
- * Pannello admin per il GP d'Italia 2026 (Monza, weekend di test). Funzioni:
+ * Pannello admin. Funzioni:
  *  - Approvazioni: accetta/rifiuta le richieste di iscrizione
- *  - Risultati: inserisci/correggi la griglia di qualifica reale, l'arrivo
- *    di gara reale e i 6 bonus di gara
+ *  - Risultati: inserisci/correggi la griglia di qualifica reale, i primi 8
+ *    Sprint reali (SOLO nei weekend che la prevedono), l'arrivo di gara reale
+ *    e i 6 bonus di gara
  *  - Partecipanti: stato schede, abilita/disabilita, gestione admin
  *  - Montepremi: quote, pagamenti, ripartizione premi (invariato da Medusino)
- *  - Sistema: un unico interruttore apri/chiudi pronostici (Qualifiche e Gara
- *    si bloccano insieme, all'inizio delle qualifiche — vedi nota in pronostici.js),
- *    ricalcola la classifica
+ *  - Sistema: un unico interruttore apri/chiudi pronostici (tutte le schede
+ *    si bloccano insieme, all'inizio della prima sessione del weekend — vedi
+ *    nota in pronostici.js), ricalcola la classifica
  *
  * Il ricalcolo classifica è interamente client-side: carica pronostici +
- * risultati, applica punteggi.js, scrive classifica/snapshot.
+ * risultati, applica punteggi.js (che include da solo lo Sprint se previsto
+ * dalla competizione attiva — vedi haSprint() in competizioni.js), scrive
+ * classifica/snapshot.
  */
 
 import { STATE } from './app.js';
@@ -22,8 +25,9 @@ import {
   getSistema, updateSistema, onSistemaSnapshot, getClassificaUpdatedAt,
 } from './db.js';
 import { caricaEvento, nomePilota, elencoPiloti } from './evento.js';
+import { haSprint } from './competizioni.js';
 import { teamBadge } from './pilota.js';
-import { normalizzaOrdine, setInPosizione, ordineCompilate } from './griglia.js';
+import { normalizzaOrdine, setInPosizione, ordineCompilate, N_SPRINT } from './griglia.js';
 import { calcolaPunteggio } from './punteggi.js';
 import { showToast, openModal, closeModal, formatDate } from './ui.js';
 
@@ -58,11 +62,18 @@ export async function initAdmin() {
   _ris.qualifica.griglia = normalizzaOrdine(_ris.qualifica.griglia);
   _ris.gara.arrivo = normalizzaOrdine(_ris.gara.arrivo);
   if (!_ris.gara.bonus) _ris.gara.bonus = {};
+  if (haSprint()) {
+    if (!_ris.sprint) _ris.sprint = {};
+    _ris.sprint.top8 = normalizzaOrdine(_ris.sprint.top8, N_SPRINT);
+  } else {
+    delete _ris.sprint;
+  }
 
   _buildShell();
   _built = true;
 
   _renderSessioneRisultati('qualifica');
+  if (haSprint()) _renderSessioneRisultati('sprint');
   _renderSessioneRisultati('gara');
   _renderBonusRisultati();
 
@@ -89,6 +100,7 @@ export function cleanupAdmin() {
 // ── SHELL ─────────────────────────────────────────────
 function _buildShell() {
   const page = document.getElementById('page-admin');
+  const sprint = haSprint();
 
   page.innerHTML = `
     <div class="page-header">
@@ -113,7 +125,7 @@ function _buildShell() {
     <div id="tab-admin-risultati" class="tab-content">
       <div class="info-banner info-banner--yellow">
         <span>📝</span>
-        <span>Inserisci i risultati REALI del weekend: ordine di arrivo (gara), più i 6 bonus. Dopo il salvataggio la classifica viene ricalcolata.</span>
+        <span>Inserisci i risultati REALI del weekend: ordine di arrivo (gara)${sprint ? ', i primi 8 della Sprint,' : ','} più i 6 bonus. Dopo il salvataggio la classifica viene ricalcolata.</span>
       </div>
       <div class="info-banner info-banner--yellow" style="margin-top:8px">
         <span>⚠️</span>
@@ -127,6 +139,15 @@ function _buildShell() {
         <button type="button" class="btn btn-primary" data-savris="qualifica">💾 Salva griglia Qualifiche</button>
         <span class="elim-save-msg" id="rismsg-qualifica"></span>
       </div>
+
+      ${sprint ? `
+      <div class="round-head" style="margin-top:24px"><h4 class="section-title">⚡ Sprint — primi 8 all'arrivo reali</h4>
+        <span class="round-progress" id="adm-risprog-sprint"></span></div>
+      <div id="adm-risround-sprint" class="grid-form"></div>
+      <div class="elim-save-row">
+        <button type="button" class="btn btn-primary" data-savris="sprint">💾 Salva Sprint</button>
+        <span class="elim-save-msg" id="rismsg-sprint"></span>
+      </div>` : ''}
 
       <div class="round-head" style="margin-top:24px"><h4 class="section-title">🏆 Gara — ordine di arrivo reale</h4>
         <span class="round-progress" id="adm-risprog-gara"></span></div>
@@ -156,10 +177,10 @@ function _buildShell() {
     <div id="tab-admin-sistema" class="tab-content">
       <div class="admin-sistema-grid">
         <div class="sistema-card">
-          <h4>📋 Pronostici (Qualifiche + Gara)</h4>
+          <h4>📋 Pronostici (${sprint ? 'Qualifiche + Sprint + Gara' : 'Qualifiche + Gara'})</h4>
           <p id="sistema-pronostici-status">—</p>
           <button type="button" id="btn-toggle-pronostici" class="btn btn-secondary">Apri / Chiudi</button>
-          <p class="reg-desc" style="margin-top:6px">Un unico interruttore: si chiudono insieme, all'inizio delle qualifiche (sabato 16:00). Non esiste un secondo blocco per la gara — vedi Regolamento.</p>
+          <p class="reg-desc" style="margin-top:6px">Un unico interruttore: tutte le schede si chiudono insieme, all'inizio della prima sessione del weekend (${sprint ? 'la Sprint, che precede le Qualifiche' : 'le qualifiche'}). Non esistono blocchi separati per le altre sessioni — vedi Regolamento.</p>
         </div>
         <div class="sistema-card">
           <h4>🏅 Classifica</h4>
@@ -357,11 +378,22 @@ function _accorciaSelectChiuso(sel) {
   if (opt && opt.dataset.short) opt.textContent = opt.dataset.short;
 }
 
-// ── RISULTATI (griglia/arrivo reali) ──────────────────
+// ── RISULTATI (griglia/top8/arrivo reali) ─────────────
+function _campoRis(sessione) {
+  if (sessione === 'qualifica') return _ris.qualifica.griglia;
+  if (sessione === 'sprint') return _ris.sprint.top8;
+  return _ris.gara.arrivo;
+}
+function _setCampoRis(sessione, arr) {
+  if (sessione === 'qualifica') _ris.qualifica.griglia = arr;
+  else if (sessione === 'sprint') _ris.sprint.top8 = arr;
+  else _ris.gara.arrivo = arr;
+}
+
 function _renderSessioneRisultati(sessione) {
   const box = document.getElementById('adm-risround-' + sessione);
   if (!box) return;
-  const campo = sessione === 'qualifica' ? _ris.qualifica.griglia : _ris.gara.arrivo;
+  const campo = _campoRis(sessione);
   const ids = elencoPiloti(_db);
 
   const optsHtml = (selPid, posizione) => {
@@ -378,7 +410,7 @@ function _renderSessioneRisultati(sessione) {
   for (let i = 0; i < campo.length; i++) {
     const pid = campo[i];
     html += `<div class="grid-row${i === 0 ? ' grid-row--top' : ''}" data-pos="${i}">
-      <span class="grid-row-pos" title="${sessione === 'qualifica' ? (i === 0 ? 'Pole position' : '') : (i === 0 ? 'Vincitore' : '')}">P${i + 1}</span>
+      <span class="grid-row-pos" title="${i === 0 ? (sessione === 'qualifica' ? 'Pole position' : 'Vincitore') : ''}">P${i + 1}</span>
       <select class="grid-select" data-sessione="${sessione}" data-pos="${i}">${optsHtml(pid, i)}</select>
       ${pid ? teamBadge(_db, pid) : ''}
     </div>`;
@@ -392,9 +424,8 @@ function _renderSessioneRisultati(sessione) {
     sel.addEventListener('blur', () => _accorciaSelectChiuso(sel));
     sel.addEventListener('change', () => {
       const s = sel.dataset.sessione, pos = +sel.dataset.pos;
-      const c = s === 'qualifica' ? _ris.qualifica.griglia : _ris.gara.arrivo;
-      const nuovo = setInPosizione(c, pos, sel.value || null);
-      if (s === 'qualifica') _ris.qualifica.griglia = nuovo; else _ris.gara.arrivo = nuovo;
+      const nuovo = setInPosizione(_campoRis(s), pos, sel.value || null);
+      _setCampoRis(s, nuovo);
       _renderSessioneRisultati(s);
     });
   });
@@ -439,6 +470,8 @@ async function _salvaRisultatiSessione(sessione, btn) {
   try {
     if (sessione === 'qualifica') {
       await setRisultati({ qualifica: { griglia: _ris.qualifica.griglia } });
+    } else if (sessione === 'sprint') {
+      await setRisultati({ sprint: { top8: _ris.sprint.top8 } });
     } else {
       await setRisultati({ gara: { arrivo: _ris.gara.arrivo, bonus: _ris.gara.bonus } });
     }
@@ -470,7 +503,8 @@ async function _renderSistema() {
 
 function _aggiornaStatoSessioni() {
   const p = document.getElementById('sistema-pronostici-status');
-  if (p) p.textContent = _pronostici_aperti ? '🟢 Aperti — i partecipanti possono modificare Qualifiche e Gara' : '🔴 Chiusi — schede bloccate';
+  const label = haSprint() ? 'Qualifiche, Sprint e Gara' : 'Qualifiche e Gara';
+  if (p) p.textContent = _pronostici_aperti ? `🟢 Aperti — i partecipanti possono modificare ${label}` : '🔴 Chiusi — schede bloccate';
 }
 
 async function _toggleSessione() {

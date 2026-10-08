@@ -1,21 +1,25 @@
 /**
  * FORMULITO — pronostici.js
- * Scheda pronostici per il GP d'Italia 2026 (Monza, weekend di test).
+ * Scheda pronostici.
  *
- * Non c'è tabellone: per ciascuna delle due sessioni indipendenti
- * (Qualifiche e Gara) l'utente ordina tutti i 22 piloti con 22 <select> a
- * cascata (scegliere un pilota già assegnato altrove lo libera lì, così non
- * si possono avere duplicati). Sotto la sessione Gara ci sono i 6 campi bonus.
+ * Tre sessioni possibili per weekend:
+ *   • Qualifiche — ordinamento di tutti i 22 piloti (griglia di partenza prevista)
+ *   • Sprint     — SOLO per i weekend che la prevedono (vedi competizioni.js →
+ *                  sprint:true): ordinamento dei primi 8 all'arrivo, gli unici
+ *                  che prendono punti ufficiali in Sprint
+ *   • Gara       — ordinamento di tutti i 22 piloti (ordine di arrivo previsto)
+ *                  + 6 campi bonus
  *
- * Salvataggio separato per sessione (due bottoni), ma il LOCK è UNICO per
- * entrambe (sistema/config.pronostici_aperti): il pronostico di gara non può
- * essere modificato dopo aver visto le qualifiche, quindi qualifica e gara si
- * chiudono nello stesso istante, all'inizio delle qualifiche — non esistono
- * due sessioni indipendenti lato lock, solo lato UI/salvataggio. Stesso
- * pattern onSistemaSnapshot usato da Wimbledino/Medusino.
+ * Salvataggio per-sessione (un bottone per scheda, ognuno risalva l'intero
+ * documento _pron — vedi serializzaPronostico), ma il LOCK è UNICO per
+ * tutte: nei weekend normali Qualifiche e Gara si chiudono insieme, all'inizio
+ * delle Qualifiche; nei weekend Sprint si chiudono tutte e tre insieme,
+ * all'inizio della Sprint (che precede le Qualifiche) — vedi Regolamento.
+ * Stesso pattern onSistemaSnapshot usato da Wimbledino/Medusino.
  *
  * Documento salvato: pronostici/{uid} = {
  *   qualifica: { griglia: [22 pid] },
+ *   sprint: { top8: [8 pid] },     // SOLO se la competizione prevede la Sprint
  *   gara: { arrivo: [22 pid], bonus: { giroVeloce, pitStopVeloce, gommaLunga,
  *           primoRitirato, safetyCar, maggiorGuadagno } },
  *   updatedAt
@@ -25,8 +29,9 @@
 import { STATE } from './app.js';
 import { getPronostici, savePronostici, onSistemaSnapshot } from './db.js';
 import { caricaEvento, nomePilota, elencoPiloti } from './evento.js';
+import { haSprint } from './competizioni.js';
 import {
-  nuovoOrdine, normalizzaOrdine, setInPosizione, ordineCompilate, serializzaPronostico,
+  normalizzaOrdine, setInPosizione, ordineCompilate, serializzaPronostico, N_SPRINT,
 } from './griglia.js';
 import { showToast } from './ui.js';
 import { teamBadge, infoBtn, openSchedaPilota } from './pilota.js';
@@ -64,6 +69,12 @@ export async function initPronostici() {
   _pron.qualifica.griglia = normalizzaOrdine(_pron.qualifica.griglia);
   _pron.gara.arrivo = normalizzaOrdine(_pron.gara.arrivo);
   if (!_pron.gara.bonus) _pron.gara.bonus = {};
+  if (haSprint()) {
+    if (!_pron.sprint) _pron.sprint = {};
+    _pron.sprint.top8 = normalizzaOrdine(_pron.sprint.top8, N_SPRINT);
+  } else {
+    delete _pron.sprint;
+  }
 
   _buildShell();
   _built = true;
@@ -76,6 +87,7 @@ export async function initPronostici() {
   });
 
   _renderSessione('qualifica');
+  if (haSprint()) _renderSessione('sprint');
   _renderSessione('gara');
   _renderBonus();
 }
@@ -89,6 +101,7 @@ export function cleanupPronostici() {
 // ── SHELL (header + tab + contenitori) ────────────────
 function _buildShell() {
   const page = document.getElementById('page-pronostici');
+  const sprint = haSprint();
 
   page.innerHTML = `
     <div class="page-header">
@@ -99,6 +112,7 @@ function _buildShell() {
 
     <div class="tab-bar" id="pronostici-tabs">
       <button type="button" class="tab active" data-tab="pron-QUALI" data-round="qualifica">🏁 Qualifiche</button>
+      ${sprint ? `<button type="button" class="tab" data-tab="pron-SPRINT" data-round="sprint">⚡ Sprint</button>` : ''}
       <button type="button" class="tab" data-tab="pron-GARA" data-round="gara">🏆 Gara</button>
     </div>
 
@@ -116,6 +130,18 @@ function _buildShell() {
         <span class="elim-save-msg" id="msg-qualifica"></span>
       </div>
     </div>
+
+    ${sprint ? `
+    <div id="pron-SPRINT" class="tab-content">
+      <div class="round-head"><h3 class="section-title">⚡ Sprint · primi 8 all'arrivo previsti</h3>
+        <span class="round-progress" id="prog-sprint"></span></div>
+      <p class="text-muted">Qui si pronosticano SOLO i primi 8 all'arrivo: sono gli unici che prendono punti nella Sprint ufficiale.</p>
+      <div id="round-sprint" class="grid-form"></div>
+      <div class="elim-save-row">
+        <button type="button" class="btn-salva-fase" data-save="sprint">💾 Salva Sprint</button>
+        <span class="elim-save-msg" id="msg-sprint"></span>
+      </div>
+    </div>` : ''}
 
     <div id="pron-GARA" class="tab-content">
       <div class="round-head"><h3 class="section-title">🏆 Gara · ordine di arrivo previsto</h3>
@@ -138,11 +164,23 @@ function _buildShell() {
   });
 }
 
-// ── RENDER DI UNA SESSIONE (22 select a cascata) ──────
+// ── HELPERS: campo-array per sessione (qualifica / sprint / gara) ─────
+function _campoDi(sessione) {
+  if (sessione === 'qualifica') return _pron.qualifica.griglia;
+  if (sessione === 'sprint') return _pron.sprint.top8;
+  return _pron.gara.arrivo;
+}
+function _setCampoDi(sessione, arr) {
+  if (sessione === 'qualifica') _pron.qualifica.griglia = arr;
+  else if (sessione === 'sprint') _pron.sprint.top8 = arr;
+  else _pron.gara.arrivo = arr;
+}
+
+// ── RENDER DI UNA SESSIONE (select a cascata) ─────────
 function _renderSessione(sessione) {
   const box = document.getElementById('round-' + sessione);
   if (!box) return;
-  const campo = sessione === 'qualifica' ? _pron.qualifica.griglia : _pron.gara.arrivo;
+  const campo = _campoDi(sessione);
   const ids = elencoPiloti(_db);
 
   // Nel menu aperto mostriamo "Nome — Scuderia" (data-full); una volta scelto,
@@ -162,11 +200,13 @@ function _renderSessione(sessione) {
   let html = '';
   for (let i = 0; i < campo.length; i++) {
     const pid = campo[i];
-    // Etichetta sempre "P1..P22" (compatta e allineata); la riga 0 (pole/vincitore)
+    // Etichetta sempre "P1..Pn" (compatta e allineata); la riga 0 (pole/vincitore)
     // si distingue con uno stile a parte (.grid-row--top) invece di una parola lunga.
     const titoloPos = sessione === 'qualifica'
       ? (i === 0 ? 'Pole position' : `Posizione ${i + 1}`)
-      : (i === 0 ? 'Vincitore' : `Posizione ${i + 1}`);
+      : sessione === 'sprint'
+        ? (i === 0 ? 'Vincitore Sprint' : `Posizione ${i + 1}`)
+        : (i === 0 ? 'Vincitore' : `Posizione ${i + 1}`);
     html += `<div class="grid-row${i === 0 ? ' grid-row--top' : ''}" data-pos="${i}">
       <span class="grid-row-pos" title="${titoloPos}">P${i + 1}</span>
       <select class="grid-select" data-sessione="${sessione}" data-pos="${i}">${optsHtml(pid, i)}</select>
@@ -211,13 +251,12 @@ function _accorciaSelectChiuso(sel) {
 }
 
 function _setPosizione(sessione, pos, pid) {
-  const campo = sessione === 'qualifica' ? _pron.qualifica.griglia : _pron.gara.arrivo;
+  const campo = _campoDi(sessione);
   const nuovo = setInPosizione(campo, pos, pid);
-  if (sessione === 'qualifica') _pron.qualifica.griglia = nuovo;
-  else _pron.gara.arrivo = nuovo;
+  _setCampoDi(sessione, nuovo);
 }
 
-// ── RENDER BONUS ───────────────────────────────────────
+// ── RENDER BONUS (solo Gara) ───────────────────────────
 function _renderBonus() {
   const box = document.getElementById('bonus-box');
   if (!box) return;
@@ -278,21 +317,24 @@ function _applyLockState() {
   const page = document.getElementById('page-pronostici');
   if (!page) return;
 
+  const sessioniLabel = haSprint() ? 'Qualifiche, Sprint e Gara' : 'Qualifiche e Gara';
+
   if (_pronostici_aperti) {
     if (banner) banner.style.display = 'none';
-    if (status) status.textContent = 'Pronostici aperti — Qualifiche e Gara';
+    if (status) status.textContent = `Pronostici aperti — ${sessioniLabel}`;
   } else {
     if (banner) {
       banner.style.display = '';
       banner.className = 'info-banner info-banner--yellow';
-      banner.innerHTML = `<span>🔒</span><span>Pronostici chiusi: le qualifiche sono iniziate, la scheda (Qualifiche e Gara) è in sola lettura.</span>`;
+      banner.innerHTML = `<span>🔒</span><span>Pronostici chiusi: la prima sessione del weekend è iniziata, la scheda (${sessioniLabel}) è in sola lettura.</span>`;
     }
     if (status) status.textContent = 'Pronostici chiusi';
   }
 
-  const quali = document.getElementById('pron-QUALI');
-  const gara  = document.getElementById('pron-GARA');
-  [quali, gara].forEach((box) => {
+  const quali  = document.getElementById('pron-QUALI');
+  const sprint = document.getElementById('pron-SPRINT');
+  const gara   = document.getElementById('pron-GARA');
+  [quali, sprint, gara].forEach((box) => {
     if (!box) return;
     box.querySelectorAll('.grid-select, .bonus-select, .bonus-num').forEach(el => {
       if (_pronostici_aperti) el.removeAttribute('disabled'); else el.setAttribute('disabled', 'disabled');
