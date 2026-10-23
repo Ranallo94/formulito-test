@@ -20,9 +20,11 @@ import { caricaEvento, nomePilota } from './evento.js';
 import { normalizzaOrdine, mappaPosizioni, renderOrdineReadOnly, N_SPRINT } from './griglia.js';
 import { calcolaPunteggio } from './punteggi.js';
 import { haSprint } from './competizioni.js';
-import { caricaStagione, renderStagione, renderMedaglie, posizioneInClassifica } from './stagione.js';
+import { caricaStagione, renderStagione, renderBacheca, posizioneInClassifica } from './stagione.js';
+import { competizioneAttuale, getCompetizione } from './competizioni.js';
 
 let _tabsBound = false;
+let _vistaBound = false;
 
 // ── INIT ──────────────────────────────────────────────
 export async function initProfilo() {
@@ -34,15 +36,19 @@ export async function initProfilo() {
   const sprintAttivo = haSprint();
 
   _bindInnerTabs();
+  _bindVista();
   _resetInnerTabs();
+  _setVista('gara');
   _renderBanner(isMe);
+
+  const gpNome = document.getElementById('profilo-vista-gara-nome');
+  if (gpNome) gpNome.textContent = getCompetizione(competizioneAttuale()).nome;
 
   const bd = document.getElementById('profilo-breakdown');
   if (bd) bd.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Caricamento profilo…</p></div>';
   _spinner('profilo-griglie-container');
   _spinner('profilo-stagione');
-  const medBox = document.getElementById('profilo-medaglie');
-  if (medBox) medBox.innerHTML = '';
+  renderBacheca(document.getElementById('profilo-bacheca'), null);
   _caricaStagione(targetUid);
 
   try {
@@ -94,9 +100,11 @@ async function _caricaStagione(uid) {
   try {
     const st = await caricaStagione(uid);
     if (uid !== (STATE.profiloUid || STATE.utente?.id)) return;   // l'utente ha già cambiato profilo
-    renderMedaglie(document.getElementById('profilo-medaglie'), st);
+    renderBacheca(document.getElementById('profilo-bacheca'), st);
     renderStagione(box, st, uid);
   } catch (err) {
+    const bacheca = document.getElementById('profilo-bacheca');
+    if (bacheca) bacheca.innerHTML = '';
     if (box) box.innerHTML =
       `<div class="empty-state"><div class="empty-icon">⚠️</div>` +
       `<p>Impossibile caricare le statistiche di stagione.</p><p class="text-muted">${err.message || ''}</p></div>`;
@@ -116,10 +124,34 @@ function _renderBanner(isMe) {
   if (btn) btn.addEventListener('click', () => navigaA('classifica'));
 }
 
+// Selettore "Gara attuale / Stagione" + pulsante della bacheca (delegato: la bacheca è ridisegnata a ogni caricamento)
+function _setVista(vista) {
+  document.querySelectorAll('#profilo-vista-switch .vista-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.vista === vista));
+  document.getElementById('profilo-vista-gara')?.classList.toggle('active', vista === 'gara');
+  document.getElementById('profilo-vista-stagione')?.classList.toggle('active', vista === 'stagione');
+}
+
+function _bindVista() {
+  if (_vistaBound) return;
+  const page = document.getElementById('page-profilo');
+  if (!page) return;
+  page.addEventListener('click', (e) => {
+    const switchBtn = e.target.closest('#profilo-vista-switch .vista-btn');
+    if (switchBtn) { _setVista(switchBtn.dataset.vista); return; }
+    const goto = e.target.closest('[data-vista-goto]');
+    if (goto) {
+      _setVista(goto.dataset.vistaGoto);
+      document.getElementById('profilo-vista-switch')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  _vistaBound = true;
+}
+
 function _bindInnerTabs() {
   if (_tabsBound) return;
   const bar = document.getElementById('profilo-inner-tabs');
-  const page = document.getElementById('page-profilo');
+  const page = document.getElementById('profilo-vista-gara');
   if (!bar || !page) return;
   const contents = [...page.children].filter(el => el.classList.contains('tab-content'));
   bar.querySelectorAll('.tab').forEach(tab => {
@@ -134,7 +166,7 @@ function _bindInnerTabs() {
 
 function _resetInnerTabs() {
   const bar = document.getElementById('profilo-inner-tabs');
-  const page = document.getElementById('page-profilo');
+  const page = document.getElementById('profilo-vista-gara');
   if (!bar || !page) return;
   bar.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === 0));
   const contents = [...page.children].filter(el => el.classList.contains('tab-content'));

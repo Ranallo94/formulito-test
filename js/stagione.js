@@ -282,15 +282,38 @@ function _medaglieHtml(m) {
     <span class="st-medal"><span>🥉</span><b>${m.bronzo}</b></span>`;
 }
 
-/** Fila compatta di medaglie, sotto la card del punteggio. */
-export function renderMedaglie(container, st) {
+/**
+ * Riquadro "bacheca": medaglie, badge sbloccati e pulsante verso la vista Stagione.
+ * Il pulsante porta `data-vista-goto="stagione"`: il collegamento lo fa profilo.js.
+ * `st` null = ancora in caricamento.
+ */
+export function renderBacheca(container, st) {
   if (!container) return;
-  if (!st || !st.gp.length) { container.innerHTML = ''; return; }
+  if (!st) {
+    container.innerHTML = `<div class="st-bacheca"><div class="loading-state"><div class="spinner"></div><p>Caricamento bacheca…</p></div></div>`;
+    return;
+  }
   const guadagnati = (st.badge || []).filter(x => x.ottenuto);
-  container.innerHTML = `<div class="st-medals" title="Podi nei Gran Premi disputati">${_medaglieHtml(st.medaglie)}
-    <span class="st-medals-note">su ${st.gp.length} GP</span>
-    ${guadagnati.length ? `<span class="st-badge-mini" title="Badge sbloccati">${guadagnati.map(x => `<span title="${x.nome}">${x.icon}</span>`).join('')}</span>` : ''}
-  </div>`;
+  const corpo = st.gp.length ? `
+      <div class="st-bacheca-row">
+        <div class="st-medals">${_medaglieHtml(st.medaglie)}<span class="st-medals-note">su ${st.gp.length} GP</span></div>
+      </div>
+      <div class="st-bacheca-badges">
+        ${guadagnati.length
+          ? guadagnati.map(x => `<span class="st-chip" title="${x.desc}"><span>${x.icon}</span>${x.nome}</span>`).join('')
+          : '<span class="st-muted">Nessun badge ancora: i primi arrivano coi primi GP.</span>'}
+      </div>`
+    : `<p class="st-muted" style="margin:0">Medaglie e badge compaiono dopo il primo Gran Premio concluso.</p>`;
+
+  container.innerHTML = `
+    <div class="st-bacheca">
+      <div class="st-bacheca-head">
+        <h3 class="prof-card-title" style="margin:0">🏆 Bacheca</h3>
+        <span class="st-muted">${guadagnati.length}/${(st.badge || []).length} badge</span>
+      </div>
+      ${corpo}
+      <button type="button" class="btn btn-primary st-bacheca-btn" data-vista-goto="stagione">📅 Statistiche di stagione →</button>
+    </div>`;
 }
 
 function _badgeHtml(badge) {
@@ -379,9 +402,8 @@ export function renderStagione(container, st, uid) {
 
   container.innerHTML = `
     <div class="prof-card">
-      <h3 class="prof-card-title">🏅 Podi nei Gran Premi</h3>
-      <div class="st-medals st-medals--big">${_medaglieHtml(st.medaglie)}</div>
-      <table class="prof-bd-table" style="margin-top:12px">
+      <h3 class="prof-card-title">🏅 Risultati GP per GP</h3>
+      <table class="prof-bd-table">
         <thead><tr><th>Gran Premio</th><th>Posizione</th><th>Punti</th><th></th></tr></thead>
         <tbody>${righe}</tbody>
         ${media != null ? `<tfoot><tr class="prof-bd-totrow"><td>Media punti</td><td></td><td class="prof-bd-num">${media}</td><td></td></tr></tfoot>` : ''}
