@@ -294,9 +294,20 @@ export function renderBacheca(container, st) {
     return;
   }
   const guadagnati = (st.badge || []).filter(x => x.ottenuto);
-  const corpo = st.gp.length ? `
+  const conclusi = st.gp.length;
+  const saltati = conclusi - st.partecipati;
+  const corpo = conclusi ? `
+      <div class="st-presenze${saltati ? '' : ' st-presenze--full'}">
+        <div class="st-presenze-num"><b>${st.partecipati}</b><span>/ ${conclusi}</span></div>
+        <div class="st-presenze-txt">
+          <div class="st-presenze-top">GP disputati</div>
+          <div class="st-presenze-sub">${saltati
+            ? `${saltati} ${saltati === 1 ? 'GP concluso non giocato' : 'GP conclusi non giocati'}`
+            : 'presente a tutti i GP conclusi'}</div>
+        </div>
+      </div>
       <div class="st-bacheca-row">
-        <div class="st-medals">${_medaglieHtml(st.medaglie)}<span class="st-medals-note">su ${st.gp.length} GP</span></div>
+        <div class="st-medals">${_medaglieHtml(st.medaglie)}<span class="st-medals-note">in ${st.partecipati} ${st.partecipati === 1 ? 'GP giocato' : 'GP giocati'}</span></div>
       </div>
       <div class="st-bacheca-badges">
         ${guadagnati.length
