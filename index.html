@@ -214,11 +214,13 @@
         </div>
 
         <div id="profilo-score-card" class="score-card"></div>
+        <div id="profilo-medaglie"></div>
 
-        <!-- Tab interni: Riepilogo / Griglie -->
+        <!-- Tab interni: Riepilogo / Griglie / Stagione -->
         <div class="inner-tabs" id="profilo-inner-tabs">
           <button class="tab active" data-tab="tab-profilo-riepilogo">Riepilogo</button>
           <button class="tab" data-tab="tab-profilo-griglie">Griglie</button>
+          <button class="tab" data-tab="tab-profilo-stagione">Stagione</button>
         </div>
 
         <!-- TAB: Riepilogo (punti per categoria + pronostici chiave) -->
@@ -230,6 +232,13 @@
         <!-- TAB: Griglie pronosticate (posizioni esatte evidenziate) -->
         <div id="tab-profilo-griglie" class="tab-content">
           <div id="profilo-griglie-container">
+            <div class="loading-state"><div class="spinner"></div><p>Caricamento…</p></div>
+          </div>
+        </div>
+
+        <!-- TAB: Stagione (medaglie, tabella GP, percentuali — js/stagione.js) -->
+        <div id="tab-profilo-stagione" class="tab-content">
+          <div id="profilo-stagione">
             <div class="loading-state"><div class="spinner"></div><p>Caricamento…</p></div>
           </div>
         </div>
