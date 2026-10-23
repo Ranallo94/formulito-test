@@ -213,31 +213,47 @@
           <h2 class="page-title" id="profilo-page-title">📊 Il mio profilo</h2>
         </div>
 
-        <div id="profilo-score-card" class="score-card"></div>
-        <div id="profilo-medaglie"></div>
+        <!-- Bacheca: medaglie + badge sbloccati + pulsante per le statistiche di stagione (js/stagione.js) -->
+        <div id="profilo-bacheca"></div>
 
-        <!-- Tab interni: Riepilogo / Griglie / Stagione -->
-        <div class="inner-tabs" id="profilo-inner-tabs">
-          <button class="tab active" data-tab="tab-profilo-riepilogo">Riepilogo</button>
-          <button class="tab" data-tab="tab-profilo-griglie">Griglie</button>
-          <button class="tab" data-tab="tab-profilo-stagione">Stagione</button>
+        <!-- Selettore netto: GP in corso (attuale) / Stagione (tutti i GP) -->
+        <div class="vista-switch" id="profilo-vista-switch" role="tablist">
+          <button type="button" class="vista-btn active" data-vista="gara" role="tab">
+            <span class="vista-btn-top">🏁 Gara attuale</span>
+            <span class="vista-btn-sub" id="profilo-vista-gara-nome">GP</span>
+          </button>
+          <button type="button" class="vista-btn" data-vista="stagione" role="tab">
+            <span class="vista-btn-top">📅 Stagione</span>
+            <span class="vista-btn-sub">tutti i GP</span>
+          </button>
         </div>
 
-        <!-- TAB: Riepilogo (punti per categoria + pronostici chiave) -->
-        <div id="tab-profilo-riepilogo" class="tab-content active">
-          <div id="profilo-breakdown"></div>
-          <div id="profilo-keypicks"></div>
-        </div>
+        <!-- VISTA: gara attuale -->
+        <div id="profilo-vista-gara" class="vista active">
+          <div id="profilo-score-card" class="score-card"></div>
 
-        <!-- TAB: Griglie pronosticate (posizioni esatte evidenziate) -->
-        <div id="tab-profilo-griglie" class="tab-content">
-          <div id="profilo-griglie-container">
-            <div class="loading-state"><div class="spinner"></div><p>Caricamento…</p></div>
+          <!-- Tab interni: Riepilogo / Griglie -->
+          <div class="inner-tabs" id="profilo-inner-tabs">
+            <button class="tab active" data-tab="tab-profilo-riepilogo">Riepilogo</button>
+            <button class="tab" data-tab="tab-profilo-griglie">Griglie</button>
+          </div>
+
+          <!-- TAB: Riepilogo (punti per categoria + pronostici chiave) -->
+          <div id="tab-profilo-riepilogo" class="tab-content active">
+            <div id="profilo-breakdown"></div>
+            <div id="profilo-keypicks"></div>
+          </div>
+
+          <!-- TAB: Griglie pronosticate (posizioni esatte evidenziate) -->
+          <div id="tab-profilo-griglie" class="tab-content">
+            <div id="profilo-griglie-container">
+              <div class="loading-state"><div class="spinner"></div><p>Caricamento…</p></div>
+            </div>
           </div>
         </div>
 
-        <!-- TAB: Stagione (medaglie, tabella GP, percentuali — js/stagione.js) -->
-        <div id="tab-profilo-stagione" class="tab-content">
+        <!-- VISTA: stagione (albo d'oro, badge, percentuali — js/stagione.js) -->
+        <div id="profilo-vista-stagione" class="vista">
           <div id="profilo-stagione">
             <div class="loading-state"><div class="spinner"></div><p>Caricamento…</p></div>
           </div>

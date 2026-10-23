@@ -3030,3 +3030,35 @@ select.field-input option { background: var(--bg-card2); }
 .st-albo-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 .st-me { color: var(--oro); font-weight: 800; }
 .st-row-me td { color: var(--oro); font-weight: 800; }
+
+/* ── Profilo: bacheca + selettore Gara attuale / Stagione ── */
+.st-bacheca { background: var(--bg-card); border: 1px solid var(--oro-dark); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.st-bacheca-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.st-bacheca-row { margin-bottom: 10px; }
+.st-bacheca .st-medals { margin: 0; }
+.st-bacheca-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; font-size: 12px; }
+.st-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
+  background: var(--oro-pale); border: 1px solid var(--oro-dark); font-weight: 700; font-size: 12px; }
+.st-bacheca-btn { width: 100%; justify-content: center; }
+
+.vista-switch { display: flex; gap: 8px; margin: 22px 0 16px; padding-top: 18px; border-top: 1px solid var(--border); }
+.vista-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px;
+  background: var(--bg-card); border: 2px solid var(--border); border-radius: var(--radius); color: var(--text-muted);
+  transition: all var(--transition); }
+.vista-btn-top { font-size: 15px; font-weight: 800; }
+.vista-btn-sub { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; opacity: .8; }
+.vista-btn:hover:not(.active) { color: var(--text); border-color: var(--text-muted); }
+.vista-btn.active { background: var(--verde-pale); border-color: var(--verde); color: #fff; }
+.vista { display: none; }
+.vista.active { display: block; animation: fadeIn .2s ease; }
+
+/* ── Bacheca: presenze (GP disputati su conclusi) ── */
+.st-presenze { display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 12px;
+  background: var(--bg-card2); border: 1px solid var(--border); border-left: 4px solid var(--verde); border-radius: var(--radius-sm); }
+.st-presenze--full { border-left-color: var(--oro); }
+.st-presenze-num { display: flex; align-items: baseline; gap: 4px; }
+.st-presenze-num b { font-size: 34px; font-weight: 900; line-height: 1; color: var(--text); }
+.st-presenze-num span { font-size: 18px; font-weight: 700; color: var(--text-muted); }
+.st-presenze-top { font-size: 14px; font-weight: 800; }
+.st-presenze-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
