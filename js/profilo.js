@@ -20,6 +20,7 @@ import { caricaEvento, nomePilota } from './evento.js';
 import { normalizzaOrdine, mappaPosizioni, renderOrdineReadOnly, N_SPRINT } from './griglia.js';
 import { calcolaPunteggio } from './punteggi.js';
 import { haSprint } from './competizioni.js';
+import { caricaStagione, renderStagione, renderMedaglie, posizioneInClassifica } from './stagione.js';
 
 let _tabsBound = false;
 
@@ -39,6 +40,10 @@ export async function initProfilo() {
   const bd = document.getElementById('profilo-breakdown');
   if (bd) bd.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Caricamento profilo…</p></div>';
   _spinner('profilo-griglie-container');
+  _spinner('profilo-stagione');
+  const medBox = document.getElementById('profilo-medaglie');
+  if (medBox) medBox.innerHTML = '';
+  _caricaStagione(targetUid);
 
   try {
     const db = await caricaEvento();
@@ -79,6 +84,22 @@ export async function initProfilo() {
     if (bd) bd.innerHTML =
       `<div class="empty-state"><div class="empty-icon">⚠️</div>` +
       `<p>Impossibile caricare il profilo.</p><p class="text-muted">${err.message || ''}</p></div>`;
+  }
+}
+
+// ── STAGIONE (tutti i GP) ─────────────────────────────
+// Indipendente dal resto del profilo: se fallisce, Riepilogo e Griglie restano intatti.
+async function _caricaStagione(uid) {
+  const box = document.getElementById('profilo-stagione');
+  try {
+    const st = await caricaStagione(uid);
+    if (uid !== (STATE.profiloUid || STATE.utente?.id)) return;   // l'utente ha già cambiato profilo
+    renderMedaglie(document.getElementById('profilo-medaglie'), st);
+    renderStagione(box, st, uid);
+  } catch (err) {
+    if (box) box.innerHTML =
+      `<div class="empty-state"><div class="empty-icon">⚠️</div>` +
+      `<p>Impossibile caricare le statistiche di stagione.</p><p class="text-muted">${err.message || ''}</p></div>`;
   }
 }
 
@@ -290,28 +311,7 @@ function _spinner(id) {
   if (el) el.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Caricamento…</p></div>';
 }
 
-function _posizione(classifica, uid) {
-  if (!uid || !classifica?.length) return null;
-  const sorted = [...classifica].sort((a, b) => {
-    if (b.totale !== a.totale) return (b.totale || 0) - (a.totale || 0);
-    const sa = a.spareggio || [], sb = b.spareggio || [];
-    for (let i = 0; i < Math.max(sa.length, sb.length); i++) {
-      if ((sb[i] || 0) !== (sa[i] || 0)) return (sb[i] || 0) - (sa[i] || 0);
-    }
-    return (a.nome || '').localeCompare(b.nome || '', 'it');
-  });
-  let pos = 1;
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0) {
-      const prev = sorted[i - 1], cur = sorted[i];
-      const same = prev.totale === cur.totale &&
-        JSON.stringify(prev.spareggio) === JSON.stringify(cur.spareggio);
-      if (!same) pos = i + 1;
-    }
-    if (sorted[i].id === uid) return pos;
-  }
-  return null;
-}
+const _posizione = posizioneInClassifica;
 
 function _posLabel(pos) {
   if (!pos) return '—';

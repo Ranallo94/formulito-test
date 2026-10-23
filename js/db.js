@@ -20,6 +20,29 @@ const db = () => window._firebase.db;
 const compDoc = (col, id) => doc(db(), 'competizioni', competizioneAttuale(), col, id);
 const compCol = (col) => collection(db(), 'competizioni', competizioneAttuale(), col);
 
+// ── LETTURA TRASVERSALE (statistiche di stagione) ─────
+
+/**
+ * Legge, per una competizione QUALSIASI (non solo quella attuale), classifica,
+ * risultati ufficiali e pronostico di un partecipante. Sola lettura.
+ * @param {string} compId
+ * @param {string} uid
+ * @returns {Promise<{classifica:Array, risultati:Object, pronostico:(Object|null)}>}
+ */
+export async function getDatiCompetizione(compId, uid) {
+  const d = (col, id) => doc(db(), 'competizioni', compId, col, id);
+  const [cl, ris, pr] = await Promise.all([
+    getDoc(d('classifica', 'snapshot')),
+    getDoc(d('risultati', 'ufficiali')),
+    getDoc(d('pronostici', uid)),
+  ]);
+  return {
+    classifica: cl.exists() ? (cl.data().partecipanti || []) : [],
+    risultati: ris.exists() ? ris.data() : {},
+    pronostico: pr.exists() ? pr.data() : null,
+  };
+}
+
 // ── PRONOSTICI ────────────────────────────────────────
 
 /**
