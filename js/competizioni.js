@@ -56,6 +56,13 @@ export const COMPETIZIONI = [
     ordine: 5,
     sprint: true, // weekend con Sprint: terza scheda (solo top 8), vedi punteggi.js
   },
+  {
+    id: 'austin',
+    nome: 'GP USA',
+    nomeEsteso: 'GP degli Stati Uniti 2026 · Circuit of the Americas (Austin)',
+    dbFile: './f1_db_austin.json',
+    ordine: 6,
+  },
 ];
 
 const STORAGE_KEY = 'formulito_competizione';
