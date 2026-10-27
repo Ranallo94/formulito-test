@@ -1,0 +1,42 @@
+{
+  "evento": "GP del Messico 2026 · Autódromo Hermanos Rodríguez (Città del Messico) · Edizione speciale Kimi Antonelli",
+  "circuito": "Autódromo Hermanos Rodríguez (Città del Messico)",
+  "giri_gara": 71,
+  "sessioni": {
+    "qualifica": { "id": "qualifica", "nome": "Qualifiche",  "data": "2026-10-31T22:00:00+01:00" },
+    "gara":      { "id": "gara",      "nome": "Gara",        "data": "2026-11-01T21:00:00+01:00" }
+  },
+  "piloti": {
+    "p01": { "nome": "Lando",     "cognome": "Norris",     "team": "McLaren",       "colore": "#FF8000", "jolpicaId": "norris" },
+    "p02": { "nome": "Oscar",     "cognome": "Piastri",    "team": "McLaren",       "colore": "#FF8000", "jolpicaId": "piastri" },
+    "p03": { "nome": "Lewis",     "cognome": "Hamilton",   "team": "Ferrari",       "colore": "#E80020", "jolpicaId": "hamilton" },
+    "p04": { "nome": "Charles",   "cognome": "Leclerc",    "team": "Ferrari",       "colore": "#E80020", "jolpicaId": "leclerc" },
+    "p05": { "nome": "Max",       "cognome": "Verstappen", "team": "Red Bull",      "colore": "#3671C6", "jolpicaId": "max_verstappen" },
+    "p06": { "nome": "Isack",     "cognome": "Hadjar",     "team": "Red Bull",      "colore": "#3671C6", "jolpicaId": "hadjar" },
+    "p07": { "nome": "George",    "cognome": "Russell",    "team": "Mercedes",      "colore": "#00D7B6", "jolpicaId": "russell" },
+    "p08": { "nome": "Kimi",      "cognome": "Antonelli",  "team": "Mercedes",      "colore": "#00D7B6", "jolpicaId": "antonelli" },
+    "p09": { "nome": "Fernando",  "cognome": "Alonso",     "team": "Aston Martin",  "colore": "#229971", "jolpicaId": "alonso" },
+    "p10": { "nome": "Lance",     "cognome": "Stroll",     "team": "Aston Martin",  "colore": "#229971", "jolpicaId": "stroll" },
+    "p11": { "nome": "Alex",      "cognome": "Albon",      "team": "Williams",      "colore": "#64C4FF", "jolpicaId": "albon" },
+    "p12": { "nome": "Carlos",    "cognome": "Sainz",      "team": "Williams",      "colore": "#64C4FF", "jolpicaId": "sainz" },
+    "p13": { "nome": "Nico",      "cognome": "Hülkenberg", "team": "Audi",          "colore": "#1E5631", "jolpicaId": "hulkenberg" },
+    "p14": { "nome": "Gabriel",   "cognome": "Bortoleto",  "team": "Audi",          "colore": "#1E5631", "jolpicaId": "bortoleto" },
+    "p15": { "nome": "Pierre",    "cognome": "Gasly",      "team": "Alpine",        "colore": "#FF87BC", "jolpicaId": "gasly" },
+    "p16": { "nome": "Franco",    "cognome": "Colapinto",  "team": "Alpine",        "colore": "#FF87BC", "jolpicaId": "colapinto" },
+    "p17": { "nome": "Esteban",   "cognome": "Ocon",       "team": "Haas",          "colore": "#B6BABD", "jolpicaId": "ocon" },
+    "p18": { "nome": "Oliver",    "cognome": "Bearman",    "team": "Haas",          "colore": "#B6BABD", "jolpicaId": "bearman" },
+    "p19": { "nome": "Liam",      "cognome": "Lawson",     "team": "Racing Bulls",  "colore": "#6C98FF", "jolpicaId": "lawson" },
+    "p20": { "nome": "Arvid",     "cognome": "Lindblad",   "team": "Racing Bulls",  "colore": "#6C98FF", "jolpicaId": "arvid_lindblad" },
+    "p21": { "nome": "Sergio",    "cognome": "Pérez",      "team": "Cadillac",      "colore": "#D4AF37", "jolpicaId": "perez" },
+    "p22": { "nome": "Valtteri",  "cognome": "Bottas",     "team": "Cadillac",      "colore": "#D4AF37", "jolpicaId": "bottas" }
+  },
+  "bonus": [
+    { "id": "giroVeloce",      "label": "Giro più veloce",                     "tipo": "pilota", "punti": 5 },
+    { "id": "pitStopVeloce",   "label": "Pit stop più veloce",                 "tipo": "pilota", "punti": 5 },
+    { "id": "gommaLunga",      "label": "Più giri con la stessa gomma",        "tipo": "pilota", "punti": 5 },
+    { "id": "primoRitirato",   "label": "Primo ritirato (DNF)",                "tipo": "pilota", "punti": 5 },
+    { "id": "safetyCar",       "label": "Numero di ingressi Safety Car",       "tipo": "numero",  "puntiEsatto": 5 },
+    { "id": "maggiorGuadagno", "label": "Maggior guadagno posizioni in gara",  "tipo": "pilota", "punti": 5 }
+  ],
+  "_note": "Formulito 2026 — settima competizione: GP del Messico, Autódromo Hermanos Rodríguez (4,304 km, 71 giri), weekend 30/10–1/11/2026, formato tradizionale SENZA Sprint. Qualifiche sabato 31/10 ore 15:00 locali (UTC-6) = 22:00 italiane (CET); Gara domenica 1/11 ore 14:00 locali = 21:00 italiane. Il blocco pronostici unico scatta all'inizio delle Qualifiche. EDIZIONE SPECIALE a tema Andrea Kimi Antonelli (Mercedes, #12). Griglia identica ad Austin (22 piloti, verificata sul riepilogo pit stop ufficiale del GP USA): da correggere manualmente in caso di sostituzioni prima del weekend."
+}
