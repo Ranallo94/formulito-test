@@ -20,6 +20,7 @@ import { getDatiCompetizione } from './db.js';
 import { normalizzaOrdine, N_SPRINT } from './griglia.js';
 
 const MIN_ARRIVO_REALE = 10;
+const PILOTA_KIMI = 'p08';   // Andrea Kimi Antonelli nei f1_db_*.json (edizione speciale Messico)
 
 const BONUS_CAMPI = [
   { id: 'giroVeloce',      label: '🏁 Giro più veloce' },
@@ -181,15 +182,21 @@ export async function caricaStagione(uid, lettore = getDatiCompetizione) {
     }
 
     const s = haPron ? _statsGp(pronostico, risultati) : null;
+    // Edizione speciale Kimi: l'unico pilota "a tema" è Antonelli (id p08 in tutti i f1_db_*.json)
+    if (s && comp.tema === 'kimi') {
+      const iP = normalizzaOrdine(pronostico?.gara?.arrivo).indexOf(PILOTA_KIMI);
+      const iR = normalizzaOrdine(risultati?.gara?.arrivo).indexOf(PILOTA_KIMI);
+      s.kimi = { ok: iP >= 0 && iP === iR ? 1 : 0, tot: iP >= 0 ? 1 : 0 };
+    }
     gp.push({
-      id: comp.id, nome: comp.nome, ordine: comp.ordine,
+      id: comp.id, nome: comp.nome, ordine: comp.ordine, edizione: comp.edizione || null,
       pos, punti: me?.totale ?? null, partecipanti: classifica.length, haPron, stats: s,
     });
     if (!haPron) return;
     partecipati++;
 
     ['pole', 'vincitore', 'podioEsatto', 'podioPiloti', 'qualiEsatte', 'garaEsatte', 'top10',
-      'sprintEsatte', 'sprintVincitore'].forEach(k => {
+      'sprintEsatte', 'sprintVincitore', 'kimi'].forEach(k => {
       if (s[k]) totali[k] = _somma(totali[k], s[k]);
     });
     Object.entries(s.bonus).forEach(([id, v]) => { bonus[id] = _somma(bonus[id], v); });
@@ -251,6 +258,7 @@ export function calcolaBadge(st) {
     { id: 'bonus',      icon: '🎰', nome: 'Re dei bonus',        desc: '3 bonus indovinati nello stesso GP',         val: piuBonusInUnGp,                 soglia: 3 },
     { id: 'sprint',     icon: '⚡', nome: 'Sprinter',            desc: 'Indovina il vincitore di una Sprint',        val: ok(t.sprintVincitore),          soglia: 1 },
     { id: 'rimonta',    icon: '🚀', nome: 'Rimonta',             desc: 'Guadagna 3 posizioni rispetto al GP prima',  val: _migliorRimonta(gp),            soglia: 3 },
+    { id: 'kimi',       icon: '⭐', nome: 'Kimi Fan',            desc: 'Indovina la posizione di Antonelli nel GP Kimi Edition', val: ok(t.kimi),         soglia: 1 },
     { id: 'presenza',   icon: '🏁', nome: 'Sempre al via',       desc: 'Pronostico in tutti i GP (almeno 3)',        val: st.partecipati,                 soglia: Math.max(3, gp.length) },
   ];
   return def.map(d => ({ ...d, ottenuto: d.val >= d.soglia }));
@@ -343,6 +351,9 @@ function _badgeHtml(badge) {
     </div>`;
 }
 
+/** Etichetta delle edizioni speciali (es. "⭐ Kimi Edition") accanto al nome del GP. */
+const _tagEdizione = (ed) => (ed ? ` <span class="st-tag">⭐ ${ed}</span>` : '');
+
 function _escape(s) {
   return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
@@ -353,7 +364,7 @@ function _alboHtml(st, uid) {
     const per = (pos) => g.podio.filter(p => p.pos === pos)
       .map(p => `<span class="${p.id === uid ? 'st-me' : ''}">${_escape(p.nome)}</span> <span class="st-muted">${p.punti}</span>`).join(', ');
     return `<tr class="prof-bd-row">
-      <td class="prof-bd-turno">${g.nome}</td>
+      <td class="prof-bd-turno">${g.nome}${_tagEdizione(g.edizione)}</td>
       <td>🥇 ${per(1) || '—'}<div class="st-albo-sub">${[2, 3].map(p => per(p) ? `${_medaglia(p)} ${per(p)}` : '').filter(Boolean).join(' &nbsp; ')}</div></td>
     </tr>`;
   }).join('');
@@ -397,7 +408,7 @@ export function renderStagione(container, st, uid) {
         : g.pos > prec.pos ? '<span class="st-down">▼</span>' : '<span class="st-eq">=</span>';
     }
     return `<tr class="prof-bd-row">
-      <td class="prof-bd-turno">${g.nome}</td>
+      <td class="prof-bd-turno">${g.nome}${_tagEdizione(g.edizione)}</td>
       <td class="prof-bd-num">${g.haPron || g.pos ? _medaglia(g.pos) : '—'} ${trend}</td>
       <td class="prof-bd-num">${g.punti ?? '—'}</td>
       <td class="prof-bd-num st-muted">${g.pos ? `/${g.partecipanti}` : ''}</td>

@@ -10,7 +10,7 @@ import { initLive, cleanupLive } from './live.js';
 import { initAdmin, cleanupAdmin } from './admin.js';
 import { initProfilo } from './profilo.js';
 import { showToast } from './ui.js';
-import { getCompetizioni, getCompetizione, competizioneAttuale, setCompetizioneAttuale } from './competizioni.js';
+import { getCompetizioni, getCompetizione, competizioneAttuale, setCompetizioneAttuale, edizioneSpeciale } from './competizioni.js';
 
 // ── STATO GLOBALE ──────────────────────────────────────
 export const STATE = {
@@ -22,6 +22,22 @@ export const STATE = {
   competizioneId: competizioneAttuale(), // competizione attiva (vedi competizioni.js)
   _appInizializzata: false,
 };
+
+// ── TEMA DELL'EDIZIONE ─────────────────────────────────
+// Le edizioni speciali (competizioni.js → tema) ricolorano l'app via CSS
+// (html[data-tema]) e mostrano un'etichetta accanto al selettore. I GP normali
+// non hanno tema: l'attributo viene tolto e tornano i colori Formulito.
+function _applicaTema() {
+  const ed = edizioneSpeciale(STATE.competizioneId);
+  if (ed) document.documentElement.dataset.tema = ed.tema;
+  else delete document.documentElement.dataset.tema;
+  const chip = document.getElementById('header-edizione');
+  if (chip) {
+    chip.textContent = ed ? `⭐ ${ed.edizione}` : '';
+    chip.style.display = ed ? '' : 'none';
+  }
+}
+_applicaTema();   // subito, anche prima del login: niente "flash" di colori sbagliati
 
 // ── ENTRY POINT ────────────────────────────────────────
 export async function initApp() {
@@ -165,6 +181,7 @@ async function mostraApp() {
   // per tutte le competizioni: nessuna nuova approvazione richiesta)
   _initSelettoreCompetizione();
   _aggiornaRegolamentoEvento();
+  _applicaTema();
 
   // Logout
   document.getElementById('btn-logout').addEventListener('click', async () => {
@@ -244,6 +261,7 @@ function _initSelettoreCompetizione() {
 async function cambiaCompetizione(id) {
   if (!setCompetizioneAttuale(id)) return; // id invalido o invariato
   STATE.competizioneId = id;
+  _applicaTema();
 
   cleanupClassifica();
   cleanupLive();
@@ -266,7 +284,8 @@ function _aggiornaRegolamentoEvento() {
   if (!el) return;
   const c = getCompetizione(STATE.competizioneId);
   const sprintTxt = c.sprint ? ', un ordinamento dei primi 8 per la <strong>Sprint</strong>' : '';
-  el.innerHTML = `Formulito segue più competizioni con lo stesso login: questa scheda è per il <strong>${c.nomeEsteso}</strong>. Niente tabellone: il pronostico è un <strong>ordinamento di tutti i piloti</strong> per Qualifiche e per Gara${sprintTxt}, più 6 bonus di gara.`;
+  el.innerHTML = `Formulito segue più competizioni con lo stesso login: questa scheda è per il <strong>${c.nomeEsteso}</strong>. Niente tabellone: il pronostico è un <strong>ordinamento di tutti i piloti</strong> per Qualifiche e per Gara${sprintTxt}, più 6 bonus di gara.`
+    + (c.edizione ? `<br><br>⭐ <strong>${c.edizione}</strong>: ${c.edizioneDesc || c.edizioneTitolo || ''}` : '');
 }
 
 // ── ROUTER ─────────────────────────────────────────────

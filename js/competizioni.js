@@ -63,7 +63,27 @@ export const COMPETIZIONI = [
     dbFile: './f1_db_austin.json',
     ordine: 6,
   },
+  {
+    id: 'messico',
+    nome: 'GP Messico',
+    nomeEsteso: 'GP del Messico 2026 · Autódromo Hermanos Rodríguez · Edizione speciale Kimi Antonelli',
+    dbFile: './f1_db_messico.json',
+    ordine: 7,
+    // Edizione speciale: tema grafico (css: html[data-tema="..."]) + etichetta + banner.
+    // Cambia SOLO l'aspetto: regole e punteggi restano quelli di sempre.
+    tema: 'kimi',
+    edizione: 'Kimi Edition',
+    edizioneTitolo: 'Edizione speciale · Andrea Kimi Antonelli',
+    edizioneNumero: '12',
+    edizioneDesc: 'edizione speciale dedicata ad Andrea Kimi Antonelli (Mercedes, #12). Regole e punteggi sono quelli di sempre: cambiano solo i colori e il banner. In più si può sbloccare il badge «Kimi Fan» indovinando la posizione esatta di Antonelli all\'arrivo.',
+  },
 ];
+
+/** Dati dell'edizione speciale della competizione `id` (o null se è un GP normale). */
+export function edizioneSpeciale(id) {
+  const c = getCompetizione(id);
+  return c.tema ? c : null;
+}
 
 const STORAGE_KEY = 'formulito_competizione';
 

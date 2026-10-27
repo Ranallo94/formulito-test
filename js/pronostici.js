@@ -31,7 +31,7 @@
 import { STATE } from './app.js';
 import { getPronostici, savePronostici, onSistemaSnapshot } from './db.js';
 import { caricaEvento, nomePilota, elencoPiloti } from './evento.js';
-import { haSprint } from './competizioni.js';
+import { haSprint, edizioneSpeciale } from './competizioni.js';
 import {
   normalizzaOrdine, setInPosizione, ordineCompilate, serializzaPronostico, N_SPRINT,
 } from './griglia.js';
@@ -92,12 +92,93 @@ export async function initPronostici() {
   _renderSessione('qualifica');
   _renderSessione('gara');
   _renderBonus();
+  _avviaHero();
 }
 
 export function cleanupPronostici() {
   if (_unsubSistema) { _unsubSistema(); _unsubSistema = null; }
+  if (_heroTimer) { clearInterval(_heroTimer); _heroTimer = null; }
   _built = false;
   _pron = null;
+}
+
+// ── HERO: banner edizione speciale + conto alla rovescia ──
+// Il conto alla rovescia vale per TUTTI i GP: scade all'inizio della prima
+// sessione che chiude i pronostici (Sprint se presente, altrimenti Qualifiche),
+// letta da f1_db_*.json → sessioni. Il banner "edizione speciale" compare solo
+// per le competizioni con `tema` (competizioni.js).
+let _heroTimer = null;
+
+function _scadenzaPronostici(db, sprint) {
+  const s = db?.sessioni;
+  const sess = (sprint && s?.sprint) ? s.sprint : s?.qualifica;
+  const t = sess?.data ? new Date(sess.data).getTime() : NaN;
+  return Number.isFinite(t) ? { quando: t, nome: sess.nome || 'Qualifiche' } : null;
+}
+
+/** "3g 4h 12m" / "4h 12m" / "12m 30s" a seconda di quanto manca. */
+export function formattaConto(ms) {
+  const tot = Math.max(0, Math.floor(ms / 1000));
+  const g = Math.floor(tot / 86400), h = Math.floor((tot % 86400) / 3600);
+  const m = Math.floor((tot % 3600) / 60), s = tot % 60;
+  if (g > 0) return `${g}g ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+}
+
+function _avviaHero() {
+  if (_heroTimer) { clearInterval(_heroTimer); _heroTimer = null; }
+  const box = document.getElementById('pronostici-hero');
+  if (!box) return;
+  _heroTimer = montaHero(box, {
+    db: _db, ed: edizioneSpeciale(STATE.competizioneId), sprint: haSprint(), aperto: () => _pronostici_aperti,
+  });
+}
+
+/**
+ * Disegna banner + conto alla rovescia dentro `box` e avvia l'aggiornamento
+ * ogni secondo. Ritorna l'id dell'interval (da cancellare in cleanup).
+ * Esportata per poterla provare senza Firebase.
+ * @param {HTMLElement} box
+ * @param {{db:Object, ed:(Object|null), sprint:boolean, aperto:()=>boolean, adesso?:()=>number}} opz
+ */
+export function montaHero(box, { db, ed, sprint, aperto, adesso = Date.now }) {
+  const scad = _scadenzaPronostici(db, sprint);
+  const quando = scad ? new Date(scad.quando).toLocaleString('it-IT', {
+    weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+  }) : '';
+
+  box.className = 'hero' + (ed ? ' hero--special' : '');
+  box.innerHTML = `
+    ${ed ? `<div class="hero-num" aria-hidden="true">${ed.edizioneNumero || ''}</div>
+      <div class="hero-edizione">⭐ ${ed.edizioneTitolo || ed.edizione}</div>` : ''}
+    <div class="hero-conto">
+      <div class="hero-conto-label"></div>
+      <div class="hero-conto-val"></div>
+      ${scad ? `<div class="hero-conto-sub">Chiusura: ${quando} · start ${scad.nome.toLowerCase()}</div>` : ''}
+    </div>`;
+
+  const tick = () => {
+    const label = box.querySelector('.hero-conto-label');
+    const val = box.querySelector('.hero-conto-val');
+    if (!label || !val) return;
+    if (!aperto()) {
+      label.textContent = 'Pronostici'; val.textContent = '🔒 chiusi'; box.classList.add('hero--chiuso'); return;
+    }
+    if (!scad) { box.style.display = ed ? '' : 'none'; label.textContent = ''; val.textContent = ''; return; }
+    const manca = scad.quando - adesso();
+    if (manca <= 0) {
+      label.textContent = 'Pronostici'; val.textContent = '🏁 in chiusura: sono partiti i motori';
+      box.classList.add('hero--chiuso');
+    } else {
+      box.classList.remove('hero--chiuso');
+      label.textContent = 'Pronostici aperti · chiusura tra';
+      val.textContent = formattaConto(manca);
+      box.classList.toggle('hero--urgente', manca < 3 * 3600 * 1000);
+    }
+  };
+  tick();
+  return setInterval(tick, 1000);
 }
 
 // ── SHELL (header + tab + contenitori) ────────────────
@@ -112,6 +193,7 @@ function _buildShell() {
       <h2 class="page-title">📋 La mia scheda pronostici</h2>
       <span id="pronostici-status" class="page-subtitle"></span>
     </div>
+    <div id="pronostici-hero" class="hero"></div>
     <div id="pronostici-banner" class="info-banner" style="display:none"></div>
 
     <div class="tab-bar" id="pronostici-tabs">
