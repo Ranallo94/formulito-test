@@ -30,10 +30,10 @@
 
 import { STATE } from './app.js';
 import { getPronostici, savePronostici, onSistemaSnapshot } from './db.js';
-import { caricaEvento, nomePilota, elencoPiloti } from './evento.js';
+import { caricaEvento, nomePilota, opzioniPilotiHtml } from './evento.js';
 import { haSprint, edizioneSpeciale } from './competizioni.js';
 import {
-  normalizzaOrdine, setInPosizione, ordineCompilate, serializzaPronostico, N_SPRINT,
+  normalizzaOrdine, scambiaInPosizione, ordineCompilate, serializzaPronostico, N_SPRINT,
 } from './griglia.js';
 import { showToast } from './ui.js';
 import { teamBadge, infoBtn, openSchedaPilota } from './pilota.js';
@@ -267,21 +267,19 @@ function _renderSessione(sessione) {
   const box = document.getElementById('round-' + sessione);
   if (!box) return;
   const campo = _campoDi(sessione);
-  const ids = elencoPiloti(_db);
 
-  // Nel menu aperto mostriamo "Nome — Scuderia" (data-full); una volta scelto,
-  // il badge scuderia accanto al select rende ridondante ripeterla nella
-  // casella chiusa, quindi lì mostriamo solo il nome (data-short) — vedi
-  // _accorciaSelectChiuso più sotto.
-  const optsHtml = (selPid, posizione) => {
-    let out = '<option value="">— scegli —</option>';
-    ids.forEach(pid => {
-      const usatoAltrove = campo.includes(pid) && campo[posizione] !== pid;
-      const nome = nomePilota(_db, pid);
-      out += `<option value="${pid}"${selPid === pid ? ' selected' : ''}${usatoAltrove ? ' disabled' : ''} data-full="${nome} — ${_db.piloti[pid].team}" data-short="${nome}">${nome} — ${_db.piloti[pid].team}</option>`;
-    });
-    return out;
-  };
+  // Menu raggruppato per scuderia (<optgroup>). Un pilota già inserito in
+  // un'altra posizione NON è disabilitato: resta scegliibile e porta la nota
+  // "P7 ↔ scambia" (scegliendolo si scambiano le due posizioni, vedi
+  // _setPosizione). A menu chiuso mostriamo solo il nome (data-short): la
+  // scuderia è già nel badge accanto — vedi _accorciaSelectChiuso.
+  const optsHtml = (selPid, posizione) => opzioniPilotiHtml(_db, {
+    selPid,
+    nota: (pid) => {
+      const dove = campo.indexOf(pid);
+      return dove !== -1 && dove !== posizione ? `P${dove + 1} ↔ scambia` : null;
+    },
+  });
 
   let html = '';
   for (let i = 0; i < campo.length; i++) {
@@ -338,7 +336,7 @@ function _accorciaSelectChiuso(sel) {
 
 function _setPosizione(sessione, pos, pid) {
   const campo = _campoDi(sessione);
-  const nuovo = setInPosizione(campo, pos, pid);
+  const nuovo = scambiaInPosizione(campo, pos, pid);
   _setCampoDi(sessione, nuovo);
 }
 
@@ -346,9 +344,7 @@ function _setPosizione(sessione, pos, pid) {
 function _renderBonus() {
   const box = document.getElementById('bonus-box');
   if (!box) return;
-  const ids = elencoPiloti(_db);
-  const optsHtml = (sel) => '<option value="">— scegli —</option>' +
-    ids.map(pid => `<option value="${pid}"${sel === pid ? ' selected' : ''}>${nomePilota(_db, pid)} — ${_db.piloti[pid].team}</option>`).join('');
+  const optsHtml = (sel) => opzioniPilotiHtml(_db, { selPid: sel });
 
   box.innerHTML = BONUS_CAMPI.map(c => {
     const val = _pron.gara.bonus[c.id];

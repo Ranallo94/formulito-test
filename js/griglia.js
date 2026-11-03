@@ -22,9 +22,10 @@
  *
  * Documento risultati/ufficiali: stessa struttura, con i dati REALI (compilati dall'admin).
  *
- * L'ordinamento è gestito con N <select> a cascata: scegliendo un pilota in una
- * posizione, se era già assegnato altrove viene liberato automaticamente lì,
- * cosicché non si possano mai avere duplicati nello stesso ordinamento.
+ * L'ordinamento è gestito con N <select> a cascata, con i piloti raggruppati per
+ * scuderia. Scegliendo un pilota già assegnato altrove si fa uno SCAMBIO
+ * (scambiaInPosizione): il pilota va nella nuova posizione e chi la occupava
+ * prende il suo posto. Non si possono mai avere duplicati nello stesso ordinamento.
  */
 
 export const N_PILOTI = 22;
@@ -59,6 +60,21 @@ export function setInPosizione(ordine, index, pid) {
     if (prev !== -1 && prev !== index) out[prev] = null;
   }
   out[index] = pid || null;
+  return out;
+}
+
+/**
+ * Come setInPosizione, ma se `pid` è già in un'altra posizione fa uno SCAMBIO:
+ * `pid` va in `index` e chi occupava `index` (o la casella vuota) passa nella
+ * posizione che `pid` aveva. Niente duplicati e niente doppia selezione da
+ * rifare a mano. Ritorna un NUOVO array.
+ */
+export function scambiaInPosizione(ordine, index, pid) {
+  const out = ordine.slice();
+  if (!pid) { out[index] = null; return out; }
+  const prev = out.indexOf(pid);
+  if (prev !== -1 && prev !== index) out[prev] = out[index] || null;
+  out[index] = pid;
   return out;
 }
 

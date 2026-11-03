@@ -63,6 +63,54 @@ export function colorePilota(db, pid) {
   return db?.piloti?.[pid]?.colore || '#888888';
 }
 
+/**
+ * Piloti raggruppati per scuderia: [{ team, pids:[...] }], scuderie in ordine
+ * alfabetico e piloti in ordine alfabetico di cognome (così si trova a colpo
+ * d'occhio sia la squadra sia il pilota).
+ */
+export function pilotiPerScuderia(db) {
+  const gruppi = {};
+  Object.keys(db?.piloti || {}).forEach(pid => {
+    const team = db.piloti[pid].team || 'Altri';
+    (gruppi[team] = gruppi[team] || []).push(pid);
+  });
+  return Object.keys(gruppi)
+    .sort((a, b) => a.localeCompare(b, 'it'))
+    .map(team => ({
+      team,
+      pids: gruppi[team].sort((a, b) =>
+        (db.piloti[a].cognome || '').localeCompare(db.piloti[b].cognome || '', 'it')),
+    }));
+}
+
+/**
+ * HTML delle <option> di un menu pilota, raggruppate per scuderia (<optgroup>).
+ *
+ * @param {Object} db
+ * @param {Object} [opz]
+ * @param {string} [opz.selPid]      pilota selezionato
+ * @param {string} [opz.vuoto]       testo della prima opzione vuota (default "— scegli —")
+ * @param {(pid:string)=>(string|null)} [opz.nota]  testo da aggiungere al pilota nel menu aperto
+ *        (es. "P7 ↔ scambia" per chi è già in un'altra posizione); l'opzione resta selezionabile.
+ *
+ * Ogni <option> porta data-full (testo nel menu aperto) e data-short (solo il
+ * nome, mostrato a menu chiuso): vedi _espandiOpzioni/_accorciaSelectChiuso.
+ */
+export function opzioniPilotiHtml(db, { selPid = '', vuoto = '— scegli —', nota = null } = {}) {
+  let out = `<option value="">${vuoto}</option>`;
+  pilotiPerScuderia(db).forEach(g => {
+    out += `<optgroup label="${g.team}">`;
+    g.pids.forEach(pid => {
+      const nome = nomePilota(db, pid);
+      const n = nota ? nota(pid) : null;
+      const full = n ? `${nome} · ${n}` : nome;
+      out += `<option value="${pid}"${selPid === pid ? ' selected' : ''} data-full="${full}" data-short="${nome}">${full}</option>`;
+    });
+    out += '</optgroup>';
+  });
+  return out;
+}
+
 /** Elenco ordinato (per nome) di tutti gli id pilota del DB. */
 export function elencoPiloti(db) {
   const ids = Object.keys(db?.piloti || {});
