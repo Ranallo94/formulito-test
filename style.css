@@ -1696,46 +1696,6 @@ select.field-input option { background: var(--bg-card2); }
 }
 
 /* Premi */
-.reg-premi-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.reg-premio {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255,255,255,.03);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.reg-premio-icon {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.reg-premio-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.reg-premio-perc {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--oro);
-  letter-spacing: .3px;
-}
-
-.reg-premio-perc--none {
-  color: var(--text-muted);
-  font-weight: 600;
-}
 
 /* ── Sedicesimi: descrizione slot bracket ── */
 .elim-bracket-desc {
@@ -2502,59 +2462,6 @@ select.field-input option { background: var(--bg-card2); }
 .forma-chip--dnf { border-color: var(--rosso); }
 .forma-chip--dnf .forma-chip-pos { color: var(--rosso); }
 
-/* ════════════════════════════════════════
-   MONTEPREMI / PAGAMENTI (admin)
-════════════════════════════════════════ */
-.mp-config { margin-bottom: 16px; }
-.mp-config-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.mp-config-row > label { font-size: 13px; font-weight: 600; min-width: 130px; color: var(--text); }
-.mp-input-euro { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 10px; }
-.mp-input-euro span { color: var(--text-muted); font-weight: 700; }
-.mp-input-euro input { width: 90px; background: transparent; border: none; color: var(--text); font-size: 15px; font-weight: 700; }
-.mp-input-euro input:focus { outline: none; }
-.mp-perc-inputs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
-.mp-perc-pos { font-weight: 700; color: var(--text); margin-left: 6px; }
-.mp-perc { width: 54px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 5px 8px; color: var(--text); font-size: 14px; font-weight: 700; text-align: center; }
-.mp-perc:focus { outline: none; border-color: var(--verde-light); }
-.mp-perc-sum { margin-left: 8px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
-.mp-perc-sum.ok { color: var(--verde-light); background: rgba(42,138,71,0.12); }
-.mp-perc-sum.warn { color: var(--oro); background: rgba(242,230,61,0.12); }
-
-.mp-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-.mp-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 10px; text-align: center; }
-.mp-stat--accent { background: linear-gradient(135deg, var(--verde-dark), var(--bg-card)); border-color: var(--verde); }
-.mp-stat-val { display: block; font-size: 26px; font-weight: 900; color: var(--oro); line-height: 1.1; }
-.mp-stat--accent .mp-stat-val { color: var(--oro); }
-.mp-stat-lbl { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .04em; }
-
-.mp-distrib { margin-bottom: 16px; }
-.mp-warn-line { font-size: 12px; color: var(--oro); }
-.mp-distrib-list { display: flex; flex-direction: column; gap: 6px; }
-.mp-distrib-row { display: grid; grid-template-columns: 56px 52px 110px 1fr; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(0,0,0,0.18); border-radius: var(--radius-sm); }
-.mp-distrib-pos { font-weight: 700; }
-.mp-distrib-perc { color: var(--text-muted); font-size: 13px; }
-.mp-distrib-amt { font-weight: 800; color: var(--oro); }
-.mp-distrib-name { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mp-distrib-note { font-size: 12px; margin-top: 6px; }
-
-.mp-pay-list { display: flex; flex-direction: column; gap: 8px; }
-.mp-pay-row { display: grid; grid-template-columns: 1.6fr 0.9fr 1.1fr 1.1fr; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
-.mp-pay-row--ok { border-color: var(--verde); background: linear-gradient(90deg, rgba(42,138,71,0.10), var(--bg-card)); }
-.mp-pay-check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.mp-pay-check input { width: 18px; height: 18px; accent-color: var(--verde-light); cursor: pointer; }
-.mp-pay-name { font-weight: 600; font-size: 14px; }
-.mp-pay-importo input { width: 100%; }
-.mp-pay-select { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 8px; color: var(--text); font-size: 13px; }
-.mp-pay-select:focus { outline: none; border-color: var(--verde-light); }
-.mp-pay-select:disabled, .mp-pay-importo input:disabled { opacity: 0.4; cursor: not-allowed; }
-
-@media (max-width: 640px) {
-  .mp-summary { grid-template-columns: 1fr; }
-  .mp-pay-row { grid-template-columns: 1fr 1fr; }
-  .mp-pay-check { grid-column: 1 / -1; }
-  .mp-distrib-row { grid-template-columns: 50px 44px 1fr; }
-  .mp-distrib-name { grid-column: 1 / -1; }
-}
 
 /* ════════════════════════════════════════════════════
    PROFILO — Il mio profilo
@@ -3099,3 +3006,7 @@ html[data-tema="kimi"] {
 /* Etichetta edizione nelle statistiche */
 .st-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 800;
   background: #07302b; color: #00D7B6; border: 1px solid #00A58C; vertical-align: middle; white-space: nowrap; }
+
+/* Menu piloti raggruppati per scuderia (evento.js → opzioniPilotiHtml) */
+.grid-select optgroup, .bonus-select optgroup { background: var(--bg-card); color: var(--oro); font-style: normal; font-weight: 800; }
+.grid-select option, .bonus-select option { background: var(--bg-card2); color: var(--text); font-weight: 500; }
