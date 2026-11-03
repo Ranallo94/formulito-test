@@ -77,6 +77,13 @@ export const COMPETIZIONI = [
     edizioneNumero: '12',
     edizioneDesc: 'edizione speciale dedicata ad Andrea Kimi Antonelli (Mercedes, #12). Regole e punteggi sono quelli di sempre: cambiano solo i colori e il banner. In più si può sbloccare il badge «Kimi Fan» indovinando la posizione esatta di Antonelli all\'arrivo.',
   },
+  {
+    id: 'brasile',
+    nome: 'GP Brasile',
+    nomeEsteso: 'GP del Brasile 2026 · Autódromo José Carlos Pace (Interlagos)',
+    dbFile: './f1_db_brasile.json',
+    ordine: 8,
+  },
 ];
 
 /** Dati dell'edizione speciale della competizione `id` (o null se è un GP normale). */
