@@ -19,9 +19,11 @@
  * di cicli.
  */
 
+// Campo `circuito`: chiave del tracciato reale in js/circuiti.js (classifica sul circuito).
 export const COMPETIZIONI = [
   {
     id: 'monza',
+    circuito: 'monza',
     nome: 'GP Italia',
     nomeEsteso: "GP d'Italia 2026 · Monza",
     dbFile: './f1_db.json',
@@ -29,6 +31,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'madrid',
+    circuito: 'madrid',
     nome: 'GP Madrid',
     nomeEsteso: 'GP di Madrid 2026 · Circuito de Madrid (IFEMA)',
     dbFile: './f1_db_madrid.json',
@@ -36,6 +39,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'baku',
+    circuito: 'baku',
     nome: 'GP Azerbaigian',
     nomeEsteso: "GP dell'Azerbaigian 2026 · Baku City Circuit",
     dbFile: './f1_db_baku.json',
@@ -43,6 +47,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'bahrain',
+    circuito: 'sepang',
     nome: 'GP Bahrain',
     nomeEsteso: 'GP del Bahrain 2026 · Sepang International Circuit (Malesia)',
     dbFile: './f1_db_bahrain.json',
@@ -50,6 +55,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'singapore',
+    circuito: 'singapore',
     nome: 'GP Singapore',
     nomeEsteso: 'GP di Singapore 2026 · Marina Bay Street Circuit',
     dbFile: './f1_db_singapore.json',
@@ -58,6 +64,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'austin',
+    circuito: 'austin',
     nome: 'GP USA',
     nomeEsteso: 'GP degli Stati Uniti 2026 · Circuit of the Americas (Austin)',
     dbFile: './f1_db_austin.json',
@@ -65,6 +72,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'messico',
+    circuito: 'messico',
     nome: 'GP Messico',
     nomeEsteso: 'GP del Messico 2026 · Autódromo Hermanos Rodríguez · Edizione speciale Kimi Antonelli',
     dbFile: './f1_db_messico.json',
@@ -79,6 +87,7 @@ export const COMPETIZIONI = [
   },
   {
     id: 'brasile',
+    circuito: 'brasile',
     nome: 'GP Brasile',
     nomeEsteso: 'GP del Brasile 2026 · Autódromo José Carlos Pace (Interlagos)',
     dbFile: './f1_db_brasile.json',

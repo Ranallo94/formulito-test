@@ -5,12 +5,19 @@
  */
 
 import { STATE, navigaA } from './app.js';
-import { onClassificaSnapshot, getClassificaUpdatedAt } from './db.js';
+import { onClassificaSnapshot, getClassificaUpdatedAt, getRisultati } from './db.js';
 import { showSpinner, showEmpty, formatDate } from './ui.js';
+import { getCompetizione } from './competizioni.js';
+import { CIRCUITI } from './circuiti.js';
+import { caricaCaschi, cascoDi, svgCasco, apriEditorCasco } from './caschi.js';
+import { montaCircuito } from './circuito.js';
 
 let _unsub = null;
 let _partecipanti = [];
 let _query = '';
+let _vista = 'lista';          // 'lista' | 'circuito'
+let _cv = null;                // vista circuito montata
+let _vistaBound = false;
 
 // ── INIT ──────────────────────────────────────────────
 export async function initClassifica() {
@@ -29,7 +36,15 @@ export async function initClassifica() {
   _unsub = onClassificaSnapshot((partecipanti) => {
     _partecipanti = partecipanti;
     renderClassifica(partecipanti);
+    if (_vista === 'circuito') _aggiornaCircuito();
   });
+
+  // Elenco ⇄ circuito (il circuito esiste solo se il GP ha un tracciato in circuiti.js)
+  _bindVista();
+  _vista = 'lista'; _mostraVista();
+
+  // Caschi di tutti: arrivano dopo e ridisegnano le icone (finché non ci sono, vale quello casuale)
+  caricaCaschi().then(() => { renderClassifica(_partecipanti); if (_cv) _cv.ridisegnaCaschi(); });
 
   // Timestamp aggiornamento
   try {
@@ -44,10 +59,70 @@ export async function initClassifica() {
 /** Ferma l'ascolto real-time (usato quando si cambia competizione). */
 export function cleanupClassifica() {
   if (_unsub) { _unsub(); _unsub = null; }
+  if (_cv) { _cv.distruggi(); _cv = null; }
+  _vista = 'lista'; _mostraVista();
   _partecipanti = [];
   _query = '';
   const search = document.getElementById('classifica-search');
   if (search) search.value = '';
+}
+
+// ── VISTA CIRCUITO ────────────────────────────────────
+function _bindVista() {
+  if (_vistaBound) return;
+  const bar = document.getElementById('classifica-vista');
+  if (!bar) return;
+  bar.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cvista]');
+    if (!b) return;
+    _vista = b.dataset.cvista;
+    _mostraVista();
+    if (_vista === 'circuito') _aggiornaCircuito();
+  });
+  _vistaBound = true;
+}
+
+function _mostraVista() {
+  const circ = document.getElementById('classifica-circuito');
+  const lista = document.getElementById('classifica-container');
+  const ricerca = document.getElementById('classifica-search-wrap');
+  const bar = document.getElementById('classifica-vista');
+  if (!circ || !lista) return;
+  // senza tracciato per questo GP la scelta non ha senso: si resta sull'elenco
+  const ha = !!CIRCUITI[getCompetizione(STATE.competizioneId).circuito];
+  if (bar) bar.style.display = ha ? '' : 'none';
+  if (!ha) _vista = 'lista';
+  bar?.querySelectorAll('[data-cvista]').forEach(b => b.classList.toggle('on', b.dataset.cvista === _vista));
+  circ.style.display = _vista === 'circuito' ? '' : 'none';
+  lista.style.display = _vista === 'lista' ? '' : 'none';
+  if (ricerca) ricerca.style.display = _vista === 'lista' ? '' : 'none';
+}
+
+/** Dati per il circuito: punti di qualifica (+Sprint) e totali, e fino a dove è arrivato il weekend. */
+async function _aggiornaCircuito() {
+  const el = document.getElementById('classifica-circuito');
+  const id = getCompetizione(STATE.competizioneId).circuito;
+  if (!el || !CIRCUITI[id]) return;
+  let ris = {};
+  try { ris = await getRisultati(); } catch (_) {}
+  if (_vista !== 'circuito') return;                      // nel frattempo si è tornati all'elenco
+  const piene = (a) => (Array.isArray(a) ? a : Object.values(a || {})).filter(Boolean).length;
+  const faseMax = piene(ris?.gara?.arrivo) >= 10 ? 2 : piene(ris?.qualifica?.griglia) >= 10 ? 1 : 0;
+  const partecipanti = (_partecipanti || []).map(p => ({
+    id: p.id, nome: p.nome || '—',
+    quali: (p.breakdown?.qualifica || 0) + (p.breakdown?.sprint || 0),
+    totale: p.totale || 0,
+  }));
+  if (_cv) { _cv.aggiorna({ partecipanti, faseMax }); return; }
+  _cv = montaCircuito(el, {
+    circuitoId: id, partecipanti, faseMax, meId: STATE.utente?.id,
+    cascoDi,
+    onScheda: (uid) => navigaA('profilo', { uid }),
+    onModifica: () => apriEditorCasco({
+      uid: STATE.utente.id, nome: STATE.utente.nickname || STATE.utente.nome || '',
+      onSalvato: () => { if (_cv) _cv.ridisegnaCaschi(); renderClassifica(_partecipanti); },
+    }),
+  });
 }
 
 // ── RENDER ────────────────────────────────────────────
@@ -111,7 +186,7 @@ export function renderClassifica(partecipanti) {
       <div class="classifica-row${meClass} ${posClass} classifica-row-link" data-uid="${p.id}" title="Vedi scheda pronostici">
         <div class="row-pos">${_posLabel(p._pos)}</div>
         <div class="row-info">
-          <span class="row-nome">${p.nome || '—'}${isMe(p.id) ? ' <span class="badge-tu">Tu</span>' : ''}</span>
+          <span class="row-nome">${svgCasco(cascoDi(p.id), 'hm-mini')}${p.nome || '—'}${isMe(p.id) ? ' <span class="badge-tu">Tu</span>' : ''}</span>
           <div class="row-breakdown">${bdHtml}</div>
         </div>
         <div class="row-totale">${p.totale ?? '—'}</div>

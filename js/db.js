@@ -177,6 +177,26 @@ export async function getClassificaUpdatedAt() {
   return ts ? ts.toDate() : null;
 }
 
+// ── CASCHI ────────────────────────────────────────────
+// Il casco di ogni partecipante (js/caschi.js). Collezione globale `caschi/{uid}`:
+// leggibile da tutti gli approvati, scrivibile solo dal proprietario (firestore.rules).
+
+/** Tutti i caschi scelti: { [uid]: { base, accento, visiera, trama } }. */
+export async function getCaschi() {
+  const snap = await getDocs(collection(db(), 'caschi'));
+  const out = {};
+  snap.docs.forEach(d => { out[d.id] = d.data(); });
+  return out;
+}
+
+/** Salva il proprio casco (solo i quattro campi ammessi dalle regole). */
+export async function saveCasco(uid, c) {
+  await setDoc(doc(db(), 'caschi', uid), {
+    base: c.base, accento: c.accento, visiera: c.visiera, trama: c.trama,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 // ── PARTECIPANTI ──────────────────────────────────────
 
 /**
@@ -195,21 +215,11 @@ export async function updatePartecipante(uid, patch) {
   await updateDoc(doc(db(), 'partecipanti', uid), patch);
 }
 
-/**
- * Salva lo stato di pagamento di un partecipante (solo admin).
- * Scrive l'intero oggetto `pagamento` nel documento del partecipante.
- * @param {string} uid
- * @param {Object|null} pagamento  { pagato, importo, incassatoDa, metodo, data }
- */
-export async function setPagamento(uid, pagamento) {
-  await updateDoc(doc(db(), 'partecipanti', uid), { pagamento: pagamento || null });
-}
-
 // ── SISTEMA ───────────────────────────────────────────
-// (pronostici aperti/chiusi, montepremi: tutto per-competizione)
+// (pronostici aperti/chiusi: tutto per-competizione)
 
 /**
- * Legge la configurazione di sistema (es. pronostici aperti/chiusi, montepremi)
+ * Legge la configurazione di sistema (es. pronostici aperti/chiusi)
  * della competizione attuale.
  */
 export async function getSistema() {

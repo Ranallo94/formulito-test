@@ -22,6 +22,7 @@ import { calcolaPunteggio } from './punteggi.js';
 import { haSprint } from './competizioni.js';
 import { caricaStagione, renderStagione, renderBacheca, posizioneInClassifica } from './stagione.js';
 import { competizioneAttuale, getCompetizione } from './competizioni.js';
+import { caricaCaschi, cascoDi, svgCasco, apriEditorCasco } from './caschi.js';
 
 let _tabsBound = false;
 let _vistaBound = false;
@@ -49,7 +50,7 @@ export async function initProfilo() {
   _spinner('profilo-griglie-container');
   _spinner('profilo-stagione');
   renderBacheca(document.getElementById('profilo-bacheca'), null);
-  _caricaStagione(targetUid);
+  _caricaStagione(targetUid, isMe);
 
   try {
     const db = await caricaEvento();
@@ -95,12 +96,12 @@ export async function initProfilo() {
 
 // ── STAGIONE (tutti i GP) ─────────────────────────────
 // Indipendente dal resto del profilo: se fallisce, Riepilogo e Griglie restano intatti.
-async function _caricaStagione(uid) {
+async function _caricaStagione(uid, isMe) {
   const box = document.getElementById('profilo-stagione');
   try {
-    const st = await caricaStagione(uid);
+    const [st] = await Promise.all([caricaStagione(uid), caricaCaschi()]);
     if (uid !== (STATE.profiloUid || STATE.utente?.id)) return;   // l'utente ha già cambiato profilo
-    renderBacheca(document.getElementById('profilo-bacheca'), st);
+    renderBacheca(document.getElementById('profilo-bacheca'), st, { cascoSvg: svgCasco(cascoDi(uid), 'hm-bacheca'), mio: isMe });
     renderStagione(box, st, uid);
   } catch (err) {
     const bacheca = document.getElementById('profilo-bacheca');
@@ -139,6 +140,13 @@ function _bindVista() {
   page.addEventListener('click', (e) => {
     const switchBtn = e.target.closest('#profilo-vista-switch .vista-btn');
     if (switchBtn) { _setVista(switchBtn.dataset.vista); return; }
+    if (e.target.closest('[data-casco-edit]')) {
+      apriEditorCasco({
+        uid: STATE.utente.id, nome: STATE.utente.nickname || STATE.utente.nome || '',
+        onSalvato: () => initProfilo(),
+      });
+      return;
+    }
     const goto = e.target.closest('[data-vista-goto]');
     if (goto) {
       _setVista(goto.dataset.vistaGoto);

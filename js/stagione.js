@@ -295,7 +295,7 @@ function _medaglieHtml(m) {
  * Il pulsante porta `data-vista-goto="stagione"`: il collegamento lo fa profilo.js.
  * `st` null = ancora in caricamento.
  */
-export function renderBacheca(container, st) {
+export function renderBacheca(container, st, opz = {}) {
   if (!container) return;
   if (!st) {
     container.innerHTML = `<div class="st-bacheca"><div class="loading-state"><div class="spinner"></div><p>Caricamento bacheca…</p></div></div>`;
@@ -327,11 +327,12 @@ export function renderBacheca(container, st) {
   container.innerHTML = `
     <div class="st-bacheca">
       <div class="st-bacheca-head">
-        <h3 class="prof-card-title" style="margin:0">🏆 Bacheca</h3>
+        <div class="st-who">${opz.cascoSvg || ''}<h3 class="prof-card-title" style="margin:0">🏆 Bacheca</h3></div>
         <span class="st-muted">${guadagnati.length}/${(st.badge || []).length} badge</span>
       </div>
       ${corpo}
       <button type="button" class="btn btn-primary st-bacheca-btn" data-vista-goto="stagione">📅 Statistiche di stagione →</button>
+      ${opz.mio ? '<button type="button" class="btn st-bacheca-btn" style="margin-top:8px" data-casco-edit>🎨 Personalizza il tuo casco</button>' : ''}
     </div>`;
 }
 
