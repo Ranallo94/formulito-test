@@ -199,7 +199,11 @@ export function apriEditorCasco({ uid, nome = '', onSalvato }) {
       if (onSalvato) onSalvato(c);
       chiudi();
     } catch (err) {
-      msg.textContent = 'Non riesco a salvare: ' + (err.message || 'errore'); msg.className = 'fhe-msg err';
+      console.error('Salvataggio casco', err);
+      msg.textContent = err && err.code === 'permission-denied'
+        ? 'Il database non ti permette di salvare il casco: le regole di sicurezza aggiornate (collezione «caschi») non risultano ancora pubblicate. Avvisa l'amministratore.'
+        : 'Non riesco a salvare: ' + ((err && err.message) || 'errore');
+      msg.className = 'fhe-msg err';
       btn.disabled = false; btn.textContent = '💾 Salva';
     }
   });

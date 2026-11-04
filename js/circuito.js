@@ -26,7 +26,10 @@ const NS = 'http://www.w3.org/2000/svg';
 const ROW = 46;                                   // altezza di una riga della classifica
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lerp = (a, b, t) => a + (b - a) * t;
-const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const ease = (t) => -(Math.cos(Math.PI * t) - 1) / 2;                      // partenza e arrivo dolci, velocità quasi costante in mezzo
+
+// Durate in millisecondi. I caschi devono restare distinguibili mentre avanzano: meglio lenti.
+const T = { quali: 7500, gara: 12000, pausa: 1300, manuale: 4800, intro: 450 };
 const riduci = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ── GEOMETRIA ─────────────────────────────────────────
@@ -298,10 +301,20 @@ export function montaCircuito(root, opz) {
     });
   }
   const dormi = (ms) => new Promise(r => setTimeout(r, ms));
+  /** Porta i caschi dallo step `da` allo step `a`, fermandosi un attimo dopo le qualifiche. */
+  async function avanza(da, a) {
+    let ok = true;
+    if (da < 1 && a >= 1) ok = await vai(1, T.quali);
+    if (ok && a >= 2 && da < 2) {
+      if (da < 1) { const t = token; await dormi(T.pausa); if (t !== token || distrutto) return false; }   // se nel frattempo l'utente ha toccato qualcosa, ci si ferma
+      ok = await vai(2, T.gara);
+    }
+    return ok;
+  }
   async function replay() {
-    token++; cancelAnimationFrame(raf); fineFesta(); ph = 0; place(); passi(0);
-    await dormi(500); if (!await vai(Math.min(1, dati.faseMax), 3800)) return;
-    if (dati.faseMax >= 2) { await dormi(1100); await vai(2, 5600); }
+    const mio = ++token; cancelAnimationFrame(raf); fineFesta(); ph = 0; place(); passi(0);
+    await dormi(600); if (mio !== token || distrutto) return;
+    await avanza(0, dati.faseMax);
   }
 
   function finale() {
@@ -336,7 +349,7 @@ export function montaCircuito(root, opz) {
 
   // ── eventi ──
   root.addEventListener('click', (e) => {
-    const st = e.target.closest('.cv-step'); if (st && !st.disabled) { fineFesta(); vai(+st.dataset.ph, 2400); return; }
+    const st = e.target.closest('.cv-step'); if (st && !st.disabled) { fineFesta(); vai(+st.dataset.ph, T.manuale); return; }
     if (e.target.closest('[data-replay]')) { replay(); return; }
     if (e.target.closest('[data-casco]')) { opz.onModifica && opz.onModifica(); return; }
     if (e.target.closest('[data-scheda]') && selez) { opz.onScheda && opz.onScheda(selez); return; }
@@ -355,7 +368,7 @@ export function montaCircuito(root, opz) {
   function inizia() {
     if (!ridisegna()) return;
     ultimaW = Math.round(stage.clientWidth); passi(0);
-    if (primo) { primo = false; setTimeout(() => { if (!distrutto) vai(dati.faseMax, 3600); }, 450); }
+    if (primo) { primo = false; setTimeout(() => { if (!distrutto) avanza(0, dati.faseMax); }, T.intro); }
   }
   inizia();
 
@@ -366,9 +379,9 @@ export function montaCircuito(root, opz) {
       const eraFase = dati.faseMax, eraVuoto = !dati.partecipanti.length;
       dati = { partecipanti: nuovi.partecipanti || [], faseMax: nuovi.faseMax || 0 };
       if (!ridisegna()) return;
-      if (eraVuoto && primo) { primo = false; vai(dati.faseMax, 3600); return; }
+      if (eraVuoto && primo) { primo = false; avanza(0, dati.faseMax); return; }
       ph = Math.min(ph, dati.faseMax); place(); passi(ph);
-      if (dati.faseMax > eraFase) vai(dati.faseMax, 3200);
+      if (dati.faseMax > eraFase) avanza(Math.min(2, Math.round(ph)), dati.faseMax);
     },
     /** Dopo che qualcuno ha cambiato casco: ridisegna i caschi mantenendo la posizione. */
     ridisegnaCaschi() { if (geo) ridisegna(); },
