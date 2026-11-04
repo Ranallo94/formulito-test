@@ -41,6 +41,25 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── CASCHI ─────────────────────────────────────────
+    // Il casco personalizzato di ogni partecipante (js/caschi.js), mostrato nella
+    // classifica sul circuito. Collezione separata da `partecipanti` perché lì ognuno
+    // può leggere solo il proprio documento. Lettura: tutti gli approvati.
+    // Scrittura: solo il proprietario, solo i 4 campi previsti, con colori #rrggbb e
+    // una trama della lista (così non si può salvare altro nel documento).
+    match /caschi/{uid} {
+      allow read: if isApprovato();
+      allow create, update: if isApprovato()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['base', 'accento', 'visiera', 'trama', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['base', 'accento', 'visiera', 'trama'])
+        && request.resource.data.base is string    && request.resource.data.base.matches('^#[0-9a-fA-F]{6}$')
+        && request.resource.data.accento is string && request.resource.data.accento.matches('^#[0-9a-fA-F]{6}$')
+        && request.resource.data.visiera is string && request.resource.data.visiera.matches('^#[0-9a-fA-F]{6}$')
+        && request.resource.data.trama in ['nessuna', 'strisce', 'scacchi', 'fiamme', 'onde', 'stelle', 'pois', 'diagonali', 'meta', 'mimetica'];
+      allow delete: if isAdmin();
+    }
+
     // ── COMPETIZIONI ───────────────────────────────────
     // Più competizioni (es. "monza", "madrid") nella stessa app, stesso login:
     // chi è approvato in partecipanti/{uid} lo è per TUTTE le competizioni

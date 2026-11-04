@@ -182,7 +182,14 @@
           <span id="classifica-updated" class="page-subtitle"></span>
         </div>
 
-        <div class="classifica-search-wrap">
+        <!-- Vista: elenco oppure circuito con i caschi (js/circuito.js) -->
+        <div class="seg" id="classifica-vista" role="tablist">
+          <button type="button" class="on" data-cvista="lista">📋 Lista</button>
+          <button type="button" data-cvista="circuito">🏎️ Circuito</button>
+        </div>
+        <div id="classifica-circuito" style="display:none"></div>
+
+        <div class="classifica-search-wrap" id="classifica-search-wrap">
           <input id="classifica-search" type="text" class="classifica-search-input" placeholder="🔍 Cerca partecipante…" autocomplete="off">
         </div>
 
@@ -413,37 +420,6 @@
             <li>Chi ha indovinato la pole position</li>
             <li>Chi ha indovinato più bonus di gara</li>
           </ol>
-        </div>
-
-        <!-- PREMI -->
-        <div class="reg-section">
-          <h3 class="reg-section-title">🏆 Premi</h3>
-          <div class="info-banner info-banner--yellow">
-            <span>📢</span>
-            <span>Il montepremi viene stabilito in base al numero definitivo di partecipanti e annunciato il giorno successivo all'inizio del torneo. La sua ripartizione è la seguente:</span>
-          </div>
-          <div class="reg-premi-grid">
-            <div class="reg-premio">
-              <span class="reg-premio-icon">🥇</span>
-              <span class="reg-premio-label">1° classificato</span>
-              <span class="reg-premio-perc">60%</span>
-            </div>
-            <div class="reg-premio">
-              <span class="reg-premio-icon">🥈</span>
-              <span class="reg-premio-label">2° classificato</span>
-              <span class="reg-premio-perc">30%</span>
-            </div>
-            <div class="reg-premio">
-              <span class="reg-premio-icon">🥉</span>
-              <span class="reg-premio-label">3° classificato</span>
-              <span class="reg-premio-perc">10%</span>
-            </div>
-            <div class="reg-premio">
-              <span class="reg-premio-icon">🪣</span>
-              <span class="reg-premio-label">Ultimo classificato</span>
-              <span class="reg-premio-perc reg-premio-perc--none">—</span>
-            </div>
-          </div>
         </div>
 
         <!-- NOTA BENE -->
