@@ -128,11 +128,11 @@
       "jolpicaId": "colapinto"
     },
     "p17": {
-      "nome": "Esteban",
-      "cognome": "Ocon",
+      "nome": "Rafael",
+      "cognome": "Camara",
       "team": "Haas",
       "colore": "#B6BABD",
-      "jolpicaId": "ocon"
+      "jolpicaId": "camara"
     },
     "p18": {
       "nome": "Oliver",
@@ -208,5 +208,5 @@
       "punti": 5
     }
   ],
-  "_note": "Formulito 2026 — ottava competizione: GP del Brasile, Autódromo José Carlos Pace (Interlagos, 4,309 km, 71 giri), weekend 6-8/11/2026, formato tradizionale SENZA Sprint. Qualifiche sabato 7/11 ore 15:00 locali (UTC-3) = 19:00 italiane (CET); Gara domenica 8/11 ore 14:00 locali = 18:00 italiane. Il blocco pronostici unico scatta all'inizio delle Qualifiche. Griglia: formazione titolare (sedile Haas p17 = Ocon; Hirakawa era il sostituto del GP del Messico): DA VERIFICARE prima del weekend. Orari delle sessioni da fonti non ufficiali: confermare sul sito F1."
+  "_note": "Formulito 2026 — ottava competizione: GP del Brasile, Autódromo José Carlos Pace (Interlagos, 4,309 km, 71 giri), weekend 6-8/11/2026, formato tradizionale SENZA Sprint. Qualifiche sabato 7/11 ore 15:00 locali (UTC-3) = 19:00 italiane (CET); Gara domenica 8/11 ore 14:00 locali = 18:00 italiane. Il blocco pronostici unico scatta all'inizio delle Qualifiche. Griglia: sedile Haas p17 = Rafael Camara al posto di Esteban Ocon (correzione richiesta dall'admin il 7/11; id p17 invariato, così i pronostici già salvati con lo slot p17 passano al sostituto). Altri piloti come ad Austin: da verificare prima del weekend. Orari delle sessioni da fonti non ufficiali: confermare sul sito F1."
 }
