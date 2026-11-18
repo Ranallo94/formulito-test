@@ -385,6 +385,7 @@ function _renderGrafica(sessione, box) {
     leggi: campoOra,
     scrivi: (arr) => { _setCampoDi(sessione, arr); aggiornaProgresso(); },
     bloccato: () => !_pronostici_aperti,
+    tipo: sessione === 'qualifica' ? 'partenza' : 'arrivo',
     etichetta: (i) => (sessione === 'gara' || sessione === 'sprint') ? (['🥇', '🥈', '🥉'][i] || 'P' + (i + 1)) : (i === 0 ? 'Pole' : 'P' + (i + 1)),
     suggerimento: sessione === 'qualifica'
       ? "Tocca i piloti a destra nell'ordine di qualifica: partono dalla Pole e vanno giù."
