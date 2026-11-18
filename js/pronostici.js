@@ -54,7 +54,7 @@ let _pronostici_aperti = true;
 let _unsubSistema = null;
 let _built = false;
 
-// Modalità di inserimento: 'lista' (menu a tendina) oppure 'griglia' (grafica, beta). Si ricorda nel browser.
+// Modalità di inserimento: 'lista' (menu a tendina) oppure 'griglia' (grafica). Si ricorda nel browser.
 const MODO_KEY = 'formulito_modo_pron';
 let _modo = 'lista';
 try { _modo = localStorage.getItem(MODO_KEY) === 'griglia' ? 'griglia' : 'lista'; } catch (_) { /* privato/incognito */ }
@@ -204,7 +204,7 @@ function _buildShell() {
 
     <div class="seg seg--mini" id="pron-modo" role="tablist" aria-label="Come inserire il pronostico">
       <button type="button" data-modo="lista" class="${_modo === 'lista' ? 'on' : ''}">📋 Lista</button>
-      <button type="button" data-modo="griglia" class="${_modo === 'griglia' ? 'on' : ''}">🏁 Griglia grafica <span class="beta">beta</span></button>
+      <button type="button" data-modo="griglia" class="${_modo === 'griglia' ? 'on' : ''}">🏁 Griglia grafica</button>
     </div>
 
     <div class="tab-bar" id="pronostici-tabs">
@@ -372,7 +372,7 @@ function _renderSessione(sessione) {
   _applyLockState();
 }
 
-// ── RENDER GRAFICO (beta) ─────────────────────────────
+// ── RENDER GRAFICO ───────────────────────────────────
 function _renderGrafica(sessione, box) {
   box.className = 'gg-host';
   const campoOra = () => _campoDi(sessione);

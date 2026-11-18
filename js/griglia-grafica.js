@@ -1,6 +1,6 @@
 /**
  * FORMULITO — griglia-grafica.js
- * Modalità GRAFICA (beta) per inserire un ordinamento di piloti, alternativa ai 22 menu a tendina.
+ * Modalità GRAFICA per inserire un ordinamento di piloti, alternativa ai 22 menu a tendina.
  *
  *   • QUALIFICHE: le posizioni sono disposte su DUE COLONNE sfalsate, come i piloti sulla griglia di partenza
  *     (pole a sinistra, P2 a destra un po' più indietro, P3 a sinistra…);
