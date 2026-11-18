@@ -3117,26 +3117,52 @@ html[data-tema="kimi"] {
 .gg-hint b { color: var(--text); }
 .gg-clear { min-height: 36px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card2); color: var(--text-muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .gg-clear:disabled { opacity: .4; }
-.gg-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
-.gg-slots { list-style: none; margin: 0; padding: 0; }
-.gg-slot { display: flex; align-items: center; gap: 6px; min-height: 46px; margin-bottom: 5px; padding: 3px 4px 3px 6px; border-radius: 10px;
-  background: var(--bg-card); border: 1px dashed var(--border); cursor: pointer; transition: border-color .15s, background .15s; }
-.gg-slot.pieno { border-style: solid; }
-.gg-slot.cursore { border-color: var(--oro); background: #2a2410; animation: ggPulsa 1.3s ease-in-out infinite; }
-.gg-slot.sel { border: 2px solid var(--oro); background: #3a3010; }
+
+/* la griglia: due colonne sfalsate come sulla linea di partenza */
+.gg-campo { position: relative; padding: 8px 8px 0; border-radius: 12px; border: 1px solid #3a3a42;
+  background: linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.18) calc(50% - 1px), rgba(255,255,255,.18) calc(50% + 1px), transparent calc(50% + 1px)), #2b2b31; }
+.gg-linea { margin: 0 0 8px; padding: 3px 0; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #cfcfd4;
+  background: repeating-linear-gradient(90deg, #fff 0 10px, #111 10px 20px); background-size: 100% 4px; background-repeat: no-repeat; background-position: top; padding-top: 8px; }
+.gg-slots { list-style: none; margin: 0; padding: 0 0 30px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 6px; }
+.gg-slot { position: relative; display: flex; align-items: center; gap: 4px; min-height: 52px; padding: 3px 4px 3px 5px; border-radius: 10px; cursor: pointer;
+  background: rgba(0,0,0,.28); border: 2px dashed rgba(255,255,255,.28); transition: border-color .15s, background .15s; }
+.gg-slot:nth-child(even) { transform: translateY(26px); }                 /* P2, P4… un po' più indietro */
+.gg-slot.pieno { border-style: solid; border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.4); }
+.gg-slot.cursore { border-color: var(--oro); background: rgba(245,180,0,.12); animation: ggPulsa 1.3s ease-in-out infinite; }
+.gg-slot.sel { border: 2px solid var(--oro); background: rgba(245,180,0,.22); }
+.gg-slot.drop { border-color: var(--oro); background: rgba(245,180,0,.3); box-shadow: 0 0 0 3px rgba(245,180,0,.4); }
 @keyframes ggPulsa { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,180,0,0); } 50% { box-shadow: 0 0 0 3px rgba(245,180,0,.35); } }
-.gg-n { flex: none; width: 30px; text-align: center; font-size: 12px; font-weight: 900; color: var(--text-muted); }
+.gg-n { flex: none; width: 26px; text-align: center; font-size: 11px; font-weight: 900; color: #bdbdc4; }
 .gg-slot.top .gg-n { color: var(--oro); }
-.gg-ph { flex: 1; font-size: 11px; color: var(--text-muted); opacity: .7; }
+.gg-ph { flex: 1; }
+.gg-x { position: absolute; right: -6px; top: -8px; width: 24px; height: 24px; border-radius: 50%; background: #1a1a1d; border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; line-height: 1; }
+
 .gg-chip { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px;
-  min-height: 40px; padding: 3px 8px 3px 10px; border-radius: 8px; background: var(--bg-card2); border: 1px solid var(--border); border-left: 6px solid var(--tc, #888);
-  color: var(--text); text-align: left; cursor: pointer; }
-.gg-chip:active { transform: scale(.98); }
-.gg-chip.dragging { opacity: .4; }
+  min-height: 42px; padding: 3px 8px 3px 10px; border-radius: 8px; background: var(--bg-card2); border: 1px solid var(--border); border-left: 6px solid var(--tc, #888);
+  color: var(--text); text-align: left; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.gg-chip:active { cursor: grabbing; }
+.gg-chip.dragging { opacity: .25; }
 .gg-nm { max-width: 100%; font-size: 14px; font-weight: 800; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gg-tm { font-size: 10px; line-height: 1; color: var(--text-muted); }
-.gg-chip.placed { opacity: .35; }
-.gg-pos { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 11px; font-weight: 900; color: var(--oro); }
-.gg-x { flex: none; width: 34px; height: 40px; color: var(--text-muted); font-size: 14px; }
-.gg-team { display: grid; gap: 5px; margin-bottom: 8px; }
-@media (min-width: 760px) { .gg-cols { gap: 18px; } .gg-team { grid-template-columns: 1fr 1fr; } }
+.gg-tm { max-width: 100%; font-size: 10px; line-height: 1; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gg-ghost { position: fixed; left: 0; top: 0; z-index: 9999; margin: 0; pointer-events: none; opacity: .96; box-shadow: 0 14px 30px rgba(0,0,0,.65); outline: 2px solid var(--oro); transition: none; }
+.gg-trascina { cursor: grabbing; }
+
+/* il paddock: piloti ancora da piazzare, sempre a portata di dito in fondo allo schermo */
+.gg-tray { position: sticky; bottom: calc(var(--nav-h) + 8px); z-index: 20; margin-top: 12px; padding: 6px 8px 8px; max-height: 32vh; overflow-y: auto; border-radius: 12px;
+  background: rgba(26,26,29,.97); border: 1px solid var(--oro-dark); box-shadow: 0 -8px 22px rgba(0,0,0,.55); }
+.gg-tray.drop { border-color: var(--oro); background: rgba(58,48,16,.97); }
+.gg-tray-h { display: flex; width: 100%; align-items: center; justify-content: space-between; min-height: 32px; margin-bottom: 4px; padding: 0; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--oro); text-align: left; }
+.gg-chev { font-size: 14px; }
+.gg-tray.chiuso .gg-tray-c { display: none; }
+.gg-tray.chiuso .gg-tray-h { margin-bottom: 0; }
+.gg-tray-c { display: flex; flex-wrap: wrap; gap: 6px; }
+.gg-tray .gg-chip { flex: 0 0 calc(33.333% - 4px); min-height: 38px; padding: 2px 6px 2px 8px; }
+.gg-tray .gg-nm { font-size: 12.5px; }
+.gg-slot { scroll-margin: 90px 0 calc(32vh + 90px); }
+.gg-tutti { padding: 8px 4px; font-size: 13px; font-weight: 700; color: #7be0a0; }
+@media (min-width: 700px) {
+  .gg-tray { bottom: 8px; }
+  .gg-tray .gg-chip { flex-basis: calc(25% - 5px); }
+  .gg-slot { scroll-margin-bottom: 330px; }
+  .gg-slot { min-height: 56px; }
+}
