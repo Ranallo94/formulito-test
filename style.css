@@ -3093,3 +3093,50 @@ html[data-tema="kimi"] {
 .fhe-foot .btn { min-height: 46px; }
 .hm-bacheca { width: 40px; height: 40px; flex: none; }
 .st-bacheca-head .st-who { display: flex; align-items: center; gap: 8px; }
+
+/* ═══════════════════════════════════════════
+   COPIA IN GARA + GRIGLIA GRAFICA (js/pronostici.js, js/griglia-grafica.js)
+═══════════════════════════════════════════ */
+.seg--mini { margin: 0 0 12px; }
+.seg--mini button { min-height: 44px; font-size: 13px; }
+.beta { display: inline-block; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--oro); color: var(--text-dark); font-size: 9px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; vertical-align: middle; }
+.btn-copia { min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--oro-dark); background: var(--oro-pale); color: var(--oro); font-size: 13px; font-weight: 800; }
+.btn-copia:hover { background: var(--oro-dark); color: var(--text-dark); }
+.btn-copia--sm { min-height: 40px; margin: 0 0 12px; font-size: 12px; }
+.elim-save-row { flex-wrap: wrap; gap: 8px; }
+.pulse { animation: pulseSalva 0.9s ease-in-out 4; }
+@keyframes pulseSalva { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,180,0,0); } 50% { box-shadow: 0 0 0 8px rgba(245,180,0,.45); transform: scale(1.03); } }
+
+.gg-host { display: block; }
+.gg-host.gg-bloccato { opacity: .65; }
+.gg-host.gg-bloccato .gg-chip, .gg-host.gg-bloccato .gg-slot, .gg-host.gg-bloccato .gg-x, .gg-host.gg-bloccato .gg-clear { pointer-events: none; }
+.gg-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 8px 10px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); }
+.gg-count { font-size: 15px; color: var(--text-muted); white-space: nowrap; }
+.gg-count b { font-size: 20px; color: var(--oro); }
+.gg-hint { flex: 1; min-width: 0; font-size: 12px; line-height: 1.3; color: var(--text-muted); }
+.gg-hint b { color: var(--text); }
+.gg-clear { min-height: 36px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card2); color: var(--text-muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.gg-clear:disabled { opacity: .4; }
+.gg-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+.gg-slots { list-style: none; margin: 0; padding: 0; }
+.gg-slot { display: flex; align-items: center; gap: 6px; min-height: 46px; margin-bottom: 5px; padding: 3px 4px 3px 6px; border-radius: 10px;
+  background: var(--bg-card); border: 1px dashed var(--border); cursor: pointer; transition: border-color .15s, background .15s; }
+.gg-slot.pieno { border-style: solid; }
+.gg-slot.cursore { border-color: var(--oro); background: #2a2410; animation: ggPulsa 1.3s ease-in-out infinite; }
+.gg-slot.sel { border: 2px solid var(--oro); background: #3a3010; }
+@keyframes ggPulsa { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,180,0,0); } 50% { box-shadow: 0 0 0 3px rgba(245,180,0,.35); } }
+.gg-n { flex: none; width: 30px; text-align: center; font-size: 12px; font-weight: 900; color: var(--text-muted); }
+.gg-slot.top .gg-n { color: var(--oro); }
+.gg-ph { flex: 1; font-size: 11px; color: var(--text-muted); opacity: .7; }
+.gg-chip { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px;
+  min-height: 40px; padding: 3px 8px 3px 10px; border-radius: 8px; background: var(--bg-card2); border: 1px solid var(--border); border-left: 6px solid var(--tc, #888);
+  color: var(--text); text-align: left; cursor: pointer; }
+.gg-chip:active { transform: scale(.98); }
+.gg-chip.dragging { opacity: .4; }
+.gg-nm { max-width: 100%; font-size: 14px; font-weight: 800; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gg-tm { font-size: 10px; line-height: 1; color: var(--text-muted); }
+.gg-chip.placed { opacity: .35; }
+.gg-pos { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 11px; font-weight: 900; color: var(--oro); }
+.gg-x { flex: none; width: 34px; height: 40px; color: var(--text-muted); font-size: 14px; }
+.gg-team { display: grid; gap: 5px; margin-bottom: 8px; }
+@media (min-width: 760px) { .gg-cols { gap: 18px; } .gg-team { grid-template-columns: 1fr 1fr; } }
