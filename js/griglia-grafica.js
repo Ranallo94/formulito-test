@@ -2,8 +2,10 @@
  * FORMULITO — griglia-grafica.js
  * Modalità GRAFICA (beta) per inserire un ordinamento di piloti, alternativa ai 22 menu a tendina.
  *
- *   • le posizioni sono disposte su DUE COLONNE sfalsate, come i piloti sulla griglia di partenza
+ *   • QUALIFICHE: le posizioni sono disposte su DUE COLONNE sfalsate, come i piloti sulla griglia di partenza
  *     (pole a sinistra, P2 a destra un po' più indietro, P3 a sinistra…);
+ *   • GARA e Sprint (tipo 'arrivo'): in alto il PODIO (2º a sinistra, 1º al centro più in alto, 3º a destra),
+ *     poi l'elenco dal 4º posto in giù, una posizione per riga;
  *   • sotto, il "paddock": i piloti ancora da piazzare. TOCCA un pilota e va nella prossima posizione libera;
  *   • TENENDO PREMUTO un pilota (o selezionandolo e trascinando) lo si solleva e lo si porta dove si vuole,
  *     come le icone sulla home del telefono: lasciato su un altro pilota i due si scambiano, su una posizione
@@ -78,10 +80,21 @@ export function montaGrigliaGrafica(box, opz) {
     const messi = new Set(campo.filter(Boolean));
     const dest = sel == null ? (cursore ?? primoVuoto(campo)) : null;
 
-    const slots = campo.map((pid, i) => {
-      const cls = ['gg-slot', pid ? 'pieno' : 'vuoto', i === 0 ? 'top' : '', i === sel ? 'sel' : '', i === dest ? 'cursore' : ''].filter(Boolean).join(' ');
-      return `<li class="${cls}" data-i="${i}"><span class="gg-n">${esc(etichetta(i))}</span>${pid ? chip(pid) + '<button type="button" class="gg-x" aria-label="Togli dalla griglia">✕</button>' : '<span class="gg-ph"></span>'}</li>`;
-    }).join('');
+    /** Una posizione (stessa struttura ovunque: il resto del modulo la riconosce da .gg-slot[data-i]). */
+    const posto = (i, tag, extra = '') => {
+      const pid = campo[i];
+      const cls = ['gg-slot', extra, pid ? 'pieno' : 'vuoto', i === 0 ? 'top' : '', i === sel ? 'sel' : '', i === dest ? 'cursore' : ''].filter(Boolean).join(' ');
+      return `<${tag} class="${cls}" data-i="${i}"><span class="gg-n">${esc(etichetta(i))}</span>${pid ? chip(pid) + '<button type="button" class="gg-x" aria-label="Togli dalla griglia">✕</button>' : '<span class="gg-ph"></span>'}</${tag}>`;
+    };
+    let posizioni;
+    if (tipo === 'partenza') {
+      posizioni = `<ol class="gg-slots">${campo.map((_, i) => posto(i, 'li')).join('')}</ol>`;
+    } else {
+      const podio = [1, 0, 2].filter(i => i < n)                   // 2º a sinistra, 1º al centro, 3º a destra
+        .map(i => `<div class="gg-pod-col pod${i + 1}">${posto(i, 'div', 'gg-pod')}<div class="gg-plinto">${i + 1}</div></div>`).join('');
+      const resto = campo.map((_, i) => i).filter(i => i >= 3).map(i => posto(i, 'li')).join('');
+      posizioni = `<div class="gg-podio">${podio}</div>` + (n > 3 ? `<div class="gg-sub">Dal 4º posto in giù</div><ol class="gg-elenco">${resto}</ol>` : '');
+    }
 
     const daPiazzare = tuttiPid().filter(pid => !messi.has(pid));
     const tray = daPiazzare.length
@@ -98,8 +111,8 @@ export function montaGrigliaGrafica(box, opz) {
       <div class="gg-bar"><span class="gg-count"><b>${fatti}</b>/${n}</span><span class="gg-hint">${guida}</span>
         <button type="button" class="gg-clear"${fatti ? '' : ' disabled'}>🗑 Svuota</button></div>
       <div class="gg-campo gg-${tipo}">
-        <div class="gg-linea">${tipo === 'partenza' ? 'Linea di partenza · pole' : 'Traguardo · vincitore'}</div>
-        <ol class="gg-slots">${slots}</ol>
+        <div class="gg-linea">${tipo === 'partenza' ? 'Linea di partenza · pole' : 'Traguardo · il podio'}</div>
+        ${posizioni}
       </div>
       <div class="gg-tray${paddockChiuso ? ' chiuso' : ''}"><button type="button" class="gg-tray-h">Paddock · ${daPiazzare.length} ${daPiazzare.length === 1 ? 'pilota' : 'piloti'} da piazzare <span class="gg-chev">${paddockChiuso ? '▴' : '▾'}</span></button><div class="gg-tray-c">${tray}</div></div>
     </div>`;
