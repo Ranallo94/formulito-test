@@ -3148,7 +3148,7 @@ html[data-tema="kimi"] {
 .gg-trascina { cursor: grabbing; }
 
 /* il paddock: piloti ancora da piazzare, sempre a portata di dito in fondo allo schermo */
-.gg-tray { position: sticky; bottom: calc(var(--nav-h) + 8px); z-index: 20; margin-top: 12px; padding: 6px 8px 8px; max-height: 32vh; overflow-y: auto; border-radius: 12px;
+.gg-tray { position: sticky; bottom: calc(var(--nav-h) + 8px); z-index: 20; margin-top: 12px; padding: 6px 8px 8px; max-height: max(150px, calc(32vh - 44px)); overflow-y: auto; border-radius: 12px;
   background: rgba(26,26,29,.97); border: 1px solid var(--oro-dark); box-shadow: 0 -8px 22px rgba(0,0,0,.55); }
 .gg-tray.drop { border-color: var(--oro); background: rgba(58,48,16,.97); }
 .gg-tray-h { display: flex; width: 100%; align-items: center; justify-content: space-between; min-height: 32px; margin-bottom: 4px; padding: 0; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--oro); text-align: left; }
@@ -3158,7 +3158,7 @@ html[data-tema="kimi"] {
 .gg-tray-c { display: flex; flex-wrap: wrap; gap: 6px; }
 .gg-tray .gg-chip { flex: 0 0 calc(33.333% - 4px); min-height: 38px; padding: 2px 6px 2px 8px; }
 .gg-tray .gg-nm { font-size: 12.5px; }
-.gg-slot { scroll-margin: 90px 0 calc(32vh + 90px); }
+.gg-slot { scroll-margin: 90px 0 calc(32vh + 50px); }
 .gg-tutti { padding: 8px 4px; font-size: 13px; font-weight: 700; color: #7be0a0; }
 @media (min-width: 700px) {
   .gg-tray { bottom: 8px; }
