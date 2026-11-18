@@ -93,6 +93,14 @@ export const COMPETIZIONI = [
     dbFile: './f1_db_brasile.json',
     ordine: 8,
   },
+  {
+    id: 'lasvegas',
+    circuito: 'lasvegas',
+    nome: 'GP Las Vegas',
+    nomeEsteso: 'GP di Las Vegas 2026 · Las Vegas Strip Circuit',
+    dbFile: './f1_db_lasvegas.json',
+    ordine: 9,
+  },
 ];
 
 /** Dati dell'edizione speciale della competizione `id` (o null se è un GP normale). */

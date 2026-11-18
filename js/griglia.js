@@ -78,6 +78,21 @@ export function scambiaInPosizione(ordine, index, pid) {
   return out;
 }
 
+/**
+ * "Copia in Gara": parte dalla griglia di qualifica prevista per costruire l'ordine d'arrivo.
+ * Copia solo le posizioni già compilate (il resto resta vuoto) e restituisce anche quante
+ * posizioni della Gara verrebbero sostituite, così l'interfaccia può chiedere conferma.
+ * @param {Array} quali     griglia di qualifica prevista (22 posizioni)
+ * @param {Array} garaOra   arrivo di gara attuale
+ * @returns {{nuovo:Array, copiati:number, sostituiti:number}}
+ */
+export function copiaInGara(quali, garaOra) {
+  const nuovo = normalizzaOrdine(quali);
+  const attuale = normalizzaOrdine(garaOra);
+  const sostituiti = attuale.filter((pid, i) => pid && pid !== nuovo[i]).length;
+  return { nuovo, copiati: ordineCompilate(nuovo), sostituiti };
+}
+
 /** true se l'ordinamento è completo: `n` posizioni, tutte diverse, nessun vuoto. */
 export function ordineCompleto(ordine, n = N_PILOTI) {
   if (!Array.isArray(ordine) || ordine.length !== n) return false;

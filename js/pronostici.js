@@ -33,8 +33,9 @@ import { getPronostici, savePronostici, onSistemaSnapshot } from './db.js';
 import { caricaEvento, nomePilota, opzioniPilotiHtml } from './evento.js';
 import { haSprint, edizioneSpeciale } from './competizioni.js';
 import {
-  normalizzaOrdine, scambiaInPosizione, ordineCompilate, serializzaPronostico, N_SPRINT,
+  normalizzaOrdine, scambiaInPosizione, ordineCompilate, serializzaPronostico, copiaInGara, N_SPRINT,
 } from './griglia.js';
+import { montaGrigliaGrafica } from './griglia-grafica.js';
 import { showToast } from './ui.js';
 import { teamBadge, infoBtn, openSchedaPilota } from './pilota.js';
 
@@ -52,6 +53,11 @@ let _pron = null;
 let _pronostici_aperti = true;
 let _unsubSistema = null;
 let _built = false;
+
+// Modalità di inserimento: 'lista' (menu a tendina) oppure 'griglia' (grafica, beta). Si ricorda nel browser.
+const MODO_KEY = 'formulito_modo_pron';
+let _modo = 'lista';
+try { _modo = localStorage.getItem(MODO_KEY) === 'griglia' ? 'griglia' : 'lista'; } catch (_) { /* privato/incognito */ }
 
 // ── INIT / CLEANUP ────────────────────────────────────
 export async function initPronostici() {
@@ -196,6 +202,11 @@ function _buildShell() {
     <div id="pronostici-hero" class="hero"></div>
     <div id="pronostici-banner" class="info-banner" style="display:none"></div>
 
+    <div class="seg seg--mini" id="pron-modo" role="tablist" aria-label="Come inserire il pronostico">
+      <button type="button" data-modo="lista" class="${_modo === 'lista' ? 'on' : ''}">📋 Lista</button>
+      <button type="button" data-modo="griglia" class="${_modo === 'griglia' ? 'on' : ''}">🏁 Griglia grafica <span class="beta">beta</span></button>
+    </div>
+
     <div class="tab-bar" id="pronostici-tabs">
       ${sprint ? `<button type="button" class="tab active" data-tab="pron-SPRINT" data-round="sprint">⚡ Sprint</button>` : ''}
       <button type="button" class="tab${sprint ? '' : ' active'}" data-tab="pron-QUALI" data-round="qualifica">🏁 Qualifiche</button>
@@ -225,14 +236,17 @@ function _buildShell() {
       <div id="round-qualifica" class="grid-form"></div>
       <div class="elim-save-row">
         <button type="button" class="btn-salva-fase" data-save="qualifica">💾 Salva Qualifiche</button>
+        <button type="button" class="btn-copia" data-copia-gara title="Copia la griglia di qualifica prevista come ordine d'arrivo della Gara">➡️ Copia in Gara</button>
         <span class="elim-save-msg" id="msg-qualifica"></span>
       </div>
+      <p class="text-muted" style="margin-top:8px;font-size:12px">Finite le qualifiche? «Copia in Gara» ti dà lo stesso ordine come base: poi ritocchi dove pensi che cambi.</p>
     </div>
 
     <div id="pron-GARA" class="tab-content">
       <div class="round-head"><h3 class="section-title">🏆 Gara · ordine di arrivo previsto</h3>
         <span class="round-progress" id="prog-gara"></span></div>
       <p class="text-muted">Indica, posizione per posizione, chi pensi vincerà (1º) e via via tutti gli altri piloti all'arrivo.</p>
+      <button type="button" class="btn-copia btn-copia--sm" data-copia-gara>⬅️ Parti dalle qualifiche</button>
       <div id="round-gara" class="grid-form"></div>
 
       <div class="round-head" style="margin-top:24px"><h3 class="section-title">🎯 Bonus di gara</h3></div>
@@ -248,6 +262,39 @@ function _buildShell() {
   page.querySelectorAll('[data-save]').forEach(btn => {
     btn.addEventListener('click', () => _salvaSessione(btn.dataset.save, btn));
   });
+  page.querySelectorAll('[data-copia-gara]').forEach(btn => {
+    btn.addEventListener('click', () => _copiaInGara());
+  });
+  page.querySelectorAll('#pron-modo [data-modo]').forEach(btn => {
+    btn.addEventListener('click', () => _cambiaModo(btn.dataset.modo));
+  });
+}
+
+// ── COPIA IN GARA ─────────────────────────────────────
+/** Usa la griglia di qualifica prevista come punto di partenza per l'ordine d'arrivo della Gara. */
+function _copiaInGara() {
+  if (!_pronostici_aperti) { showToast('Pronostici chiusi: non puoi modificare.', 'warning'); return; }
+  const { nuovo, copiati, sostituiti } = copiaInGara(_pron.qualifica.griglia, _pron.gara.arrivo);
+  if (!copiati) { showToast("Compila prima le qualifiche: non c'è ancora niente da copiare.", 'warning'); return; }
+  if (sostituiti > 0 && !confirm(`In Gara hai già ${sostituiti} ${sostituiti === 1 ? 'pilota inserito in una posizione diversa' : 'piloti inseriti in posizioni diverse'}: la copia li sostituisce. Procedo?`)) return;
+  _pron.gara.arrivo = nuovo;
+  _renderSessione('gara');
+  const tab = document.querySelector('#pronostici-tabs .tab[data-round="gara"]');
+  if (tab) tab.click();                                              // si passa subito alla scheda Gara
+  const salva = document.querySelector('[data-save="gara"]');
+  if (salva) { salva.classList.add('pulse'); setTimeout(() => salva.classList.remove('pulse'), 3500); }
+  showToast(`Qualifiche copiate in Gara (${copiati}/${nuovo.length}). Ritocca e poi salva.`, 'success');
+}
+
+// ── MODALITÀ DI INSERIMENTO (lista / griglia grafica) ─
+function _cambiaModo(modo) {
+  if (modo !== 'lista' && modo !== 'griglia') return;
+  _modo = modo;
+  try { localStorage.setItem(MODO_KEY, modo); } catch (_) { /* privato/incognito */ }
+  document.querySelectorAll('#pron-modo [data-modo]').forEach(b => b.classList.toggle('on', b.dataset.modo === modo));
+  if (haSprint()) _renderSessione('sprint');
+  _renderSessione('qualifica');
+  _renderSessione('gara');
 }
 
 // ── HELPERS: campo-array per sessione (qualifica / sprint / gara) ─────
@@ -267,6 +314,10 @@ function _renderSessione(sessione) {
   const box = document.getElementById('round-' + sessione);
   if (!box) return;
   const campo = _campoDi(sessione);
+
+  if (_modo === 'griglia') { _renderGrafica(sessione, box); return; }
+  if (box._ggAbort) { box._ggAbort.abort(); box._ggAbort = null; }     // si torna alle liste: spegne la modalità grafica
+  box.className = 'grid-form';
 
   // Menu raggruppato per scuderia (<optgroup>). Un pilota già inserito in
   // un'altra posizione NON è disabilitato: resta scegliibile e porta la nota
@@ -318,6 +369,28 @@ function _renderSessione(sessione) {
   const prog = document.getElementById('prog-' + sessione);
   if (prog) prog.textContent = `${ordineCompilate(campo)}/${campo.length}`;
 
+  _applyLockState();
+}
+
+// ── RENDER GRAFICO (beta) ─────────────────────────────
+function _renderGrafica(sessione, box) {
+  box.className = 'gg-host';
+  const campoOra = () => _campoDi(sessione);
+  const aggiornaProgresso = () => {
+    const prog = document.getElementById('prog-' + sessione);
+    if (prog) prog.textContent = `${ordineCompilate(campoOra())}/${campoOra().length}`;
+  };
+  montaGrigliaGrafica(box, {
+    db: _db,
+    leggi: campoOra,
+    scrivi: (arr) => { _setCampoDi(sessione, arr); aggiornaProgresso(); },
+    bloccato: () => !_pronostici_aperti,
+    etichetta: (i) => (sessione === 'gara' || sessione === 'sprint') ? (['🥇', '🥈', '🥉'][i] || 'P' + (i + 1)) : (i === 0 ? 'Pole' : 'P' + (i + 1)),
+    suggerimento: sessione === 'qualifica'
+      ? "Tocca i piloti a destra nell'ordine di qualifica: partono dalla Pole e vanno giù."
+      : "Tocca i piloti a destra nell'ordine in cui pensi arrivino al traguardo.",
+  });
+  aggiornaProgresso();
   _applyLockState();
 }
 
@@ -421,7 +494,8 @@ function _applyLockState() {
     box.querySelectorAll('.grid-select, .bonus-select, .bonus-num').forEach(el => {
       if (_pronostici_aperti) el.removeAttribute('disabled'); else el.setAttribute('disabled', 'disabled');
     });
-    box.querySelectorAll('[data-save]').forEach(b => { b.style.display = _pronostici_aperti ? '' : 'none'; });
+    box.querySelectorAll('[data-save], [data-copia-gara]').forEach(b => { b.style.display = _pronostici_aperti ? '' : 'none'; });
+    box.querySelectorAll('.gg-host').forEach(h => h.classList.toggle('gg-bloccato', !_pronostici_aperti));
   });
 }
 
