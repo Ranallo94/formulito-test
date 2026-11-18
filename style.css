@@ -3126,7 +3126,7 @@ html[data-tema="kimi"] {
 .gg-slots { list-style: none; margin: 0; padding: 0 0 30px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 6px; }
 .gg-slot { position: relative; display: flex; align-items: center; gap: 4px; min-height: 52px; padding: 3px 4px 3px 5px; border-radius: 10px; cursor: pointer;
   background: rgba(0,0,0,.28); border: 2px dashed rgba(255,255,255,.28); transition: border-color .15s, background .15s; }
-.gg-slot:nth-child(even) { transform: translateY(26px); }                 /* P2, P4… un po' più indietro */
+.gg-slots > .gg-slot:nth-child(even) { transform: translateY(26px); }                 /* P2, P4… un po' più indietro */
 .gg-slot.pieno { border-style: solid; border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.4); }
 .gg-slot.cursore { border-color: var(--oro); background: rgba(245,180,0,.12); animation: ggPulsa 1.3s ease-in-out infinite; }
 .gg-slot.sel { border: 2px solid var(--oro); background: rgba(245,180,0,.22); }
@@ -3166,3 +3166,21 @@ html[data-tema="kimi"] {
   .gg-slot { scroll-margin-bottom: 330px; }
   .gg-slot { min-height: 56px; }
 }
+
+/* GARA / SPRINT: il podio in alto, poi l'elenco dal 4º posto */
+.gg-arrivo { background: #2b2b31; }
+.gg-podio { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; align-items: end; padding: 4px 0 12px; }
+.gg-pod-col { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.gg-slot.gg-pod { flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; min-height: 86px; padding: 6px 3px 8px; text-align: center; }
+.gg-pod .gg-n { width: auto; font-size: 24px; line-height: 1; }
+.gg-pod .gg-chip { flex: none; min-height: 46px; align-items: flex-start; padding: 3px 4px 3px 8px; }
+.gg-pod .gg-nm { font-size: 12.5px; }
+.gg-pod-col.pod1 .gg-slot { min-height: 104px; border-color: rgba(245,180,0,.5); background: rgba(245,180,0,.1); }
+.gg-plinto { margin-top: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px 6px 0 0; font-size: 26px; font-weight: 900; color: rgba(0,0,0,.45); }
+.pod1 .gg-plinto { height: 56px; background: linear-gradient(180deg, #f5d36a, #c9a227); }
+.pod2 .gg-plinto { height: 38px; background: linear-gradient(180deg, #e3e6ea, #9aa1ab); }
+.pod3 .gg-plinto { height: 26px; background: linear-gradient(180deg, #e0a26a, #a86a36); }
+.gg-sub { margin: 4px 0 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.2); text-align: center; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #bdbdc4; }
+.gg-elenco { list-style: none; margin: 0; padding: 0 0 10px; display: grid; gap: 6px; }
+.gg-elenco .gg-slot { min-height: 50px; }
+.gg-elenco .gg-n { width: 34px; font-size: 12px; }
