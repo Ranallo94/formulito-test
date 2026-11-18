@@ -3099,7 +3099,6 @@ html[data-tema="kimi"] {
 ═══════════════════════════════════════════ */
 .seg--mini { margin: 0 0 12px; }
 .seg--mini button { min-height: 44px; font-size: 13px; }
-.beta { display: inline-block; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--oro); color: var(--text-dark); font-size: 9px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; vertical-align: middle; }
 .btn-copia { min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--oro-dark); background: var(--oro-pale); color: var(--oro); font-size: 13px; font-weight: 800; }
 .btn-copia:hover { background: var(--oro-dark); color: var(--text-dark); }
 .btn-copia--sm { min-height: 40px; margin: 0 0 12px; font-size: 12px; }
