@@ -84,6 +84,28 @@ a { color: var(--oro); text-decoration: none; }
 .login-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; margin-top: 4px; }
 
 .login-form { text-align: left; display: flex; flex-direction: column; gap: 18px; }
+.login-forgot {
+  background: none;
+  border: 0;
+  padding: 6px;
+  margin: 2px auto 0;
+  display: block;
+  color: var(--text-muted, #a0a0b0);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.login-forgot:hover { color: #fff; }
+.login-forgot:disabled { opacity: .5; cursor: default; }
+.login-info {
+  color: #9ae6b4;
+  font-size: 13px;
+  text-align: center;
+  background: rgba(56,161,105,0.12);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(56,161,105,0.35);
+}
 .login-error {
   color: #fc8181;
   font-size: 13px;
