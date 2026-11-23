@@ -16,6 +16,7 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
+  sendPasswordResetEmail,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   doc, getDoc, setDoc, serverTimestamp,
@@ -34,6 +35,12 @@ let _utente = null;
  */
 export async function initAuth(email, password) {
   await signInWithEmailAndPassword(auth(), email.trim().toLowerCase(), password);
+}
+
+// ── RECUPERO PASSWORD ─────────────────────────────────
+/** Invia all'indirizzo indicato l'email di Firebase con il link per scegliere una nuova password. */
+export async function recuperaPassword(email) {
+  await sendPasswordResetEmail(auth(), email.trim().toLowerCase());
 }
 
 // ── REGISTRAZIONE ─────────────────────────────────────

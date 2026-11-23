@@ -3,7 +3,7 @@
  * Router principale e gestione stato globale
  */
 
-import { initAuth, registra, getCurrentUser, onAuthChange, logout } from './auth.js';
+import { initAuth, recuperaPassword, registra, getCurrentUser, onAuthChange, logout } from './auth.js';
 import { initClassifica, renderClassifica, cleanupClassifica } from './classifica.js';
 import { initPronostici, cleanupPronostici } from './pronostici.js';
 import { initLive, cleanupLive } from './live.js';
@@ -94,6 +94,33 @@ export async function initApp() {
       const msg = _traduciErroreAuth(err.code) || 'Credenziali errate. Riprova.';
       showLoginError(msg);
     }
+  });
+
+  // ── Password dimenticata ──
+  document.getElementById('btn-password-dimenticata').addEventListener('click', async (e) => {
+    const info = document.getElementById('login-info');
+    info.style.display = 'none';
+    document.getElementById('login-error').style.display = 'none';
+    const email = document.getElementById('login-email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showLoginError("Scrivi la tua email nel campo qui sopra, poi tocca «Password dimenticata?».");
+      return;
+    }
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      await recuperaPassword(email);
+    } catch (err) {
+      // "utente non trovato" non si rivela: si risponde sempre allo stesso modo, così non si scoprono gli indirizzi iscritti
+      if (err.code !== 'auth/user-not-found' && err.code !== 'auth/invalid-email') {
+        showLoginError(_traduciErroreAuth(err.code) || 'Non riesco a inviare l\'email. Riprova.');
+        btn.disabled = false;
+        return;
+      }
+    }
+    info.textContent = `Se ${email} è registrata, ti abbiamo inviato un'email con il link per scegliere una nuova password. Controlla anche lo spam.`;
+    info.style.display = '';
+    btn.disabled = false;
   });
 
   // ── Form registrazione ──
