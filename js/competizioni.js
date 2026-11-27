@@ -101,6 +101,14 @@ export const COMPETIZIONI = [
     dbFile: './f1_db_lasvegas.json',
     ordine: 9,
   },
+  {
+    id: 'qatar',
+    circuito: 'qatar',
+    nome: 'GP Qatar',
+    nomeEsteso: 'GP del Qatar 2026 · Lusail International Circuit',
+    dbFile: './f1_db_qatar.json',
+    ordine: 10,
+  },
 ];
 
 /** Dati dell'edizione speciale della competizione `id` (o null se è un GP normale). */
